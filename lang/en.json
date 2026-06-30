@@ -1,0 +1,31 @@
+{
+  "II.Settings.ShowLabels.Name": "Show labels",
+  "II.Settings.ShowLabels.Hint": "Show short spell, feature, and item names on action bar buttons.",
+  "II.Notifications.DropItem": "Drop a spell, feature, item, or macro here.",
+  "II.Notifications.ItemNotFound": "Could not find this element.",
+  "II.Notifications.Cleared": "Slot cleared.",
+  "II.Notifications.Migrated": "Imagine Interface: settings migrated from the old module version.",
+  "II.Tooltip.Empty": "Empty slot",
+  "II.Tooltip.PageUp": "Previous page",
+  "II.Tooltip.PageDown": "Next page",
+  "II.Tooltip.Audio": "Audio",
+  "II.Tooltip.Lock": "Lock action bar",
+  "II.Tooltip.Unlock": "Unlock action bar",
+  "II.Tooltip.SetupMode": "Action bar setup mode",
+  "II": {
+    "Notifications": {
+      "DropSupported": "Drop an item, ability, or macro here."
+    },
+    "Settings": {
+      "SetupMode": "Setup mode",
+      "Panel": "Panel {number}",
+      "Audio": "Sound"
+    },
+    "Chat": {
+      "Advantage": "ADV",
+      "Disadvantage": "DIS",
+      "Roll": "Roll",
+      "Undo": "Undo"
+    }
+  }
+}

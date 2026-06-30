@@ -1,0 +1,824 @@
+:root {
+  --ii-slot-size: 48px;
+  --ii-gap: 6px;
+  --ii-panel-bg: rgba(21, 15, 9, 0.94);
+  --ii-panel-border: #7b5b2d;
+  --ii-panel-glow: rgba(255, 185, 82, 0.22);
+}
+
+body.ii-hide-core-hotbar #hotbar {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+#ii-action-bars {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.ii-bar {
+  height: 64px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ii-gap);
+  padding: 7px;
+  border: 2px solid var(--ii-panel-border);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(93, 65, 31, 0.82), rgba(20, 13, 8, 0.95) 36%, rgba(8, 7, 6, 0.97)),
+    var(--ii-panel-bg);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255, 231, 152, .22),
+    inset 0 -8px 18px rgba(0,0,0,.54),
+    0 0 12px var(--ii-panel-glow);
+  pointer-events: auto;
+  opacity: 1 !important;
+  width: calc((var(--ii-slot-size) * 12) + (var(--ii-gap) * 12) + 14px);
+}
+
+.ii-slots {
+  display: grid;
+  grid-template-columns: repeat(10, var(--ii-slot-size));
+  gap: var(--ii-gap);
+  align-items: center;
+}
+
+.ii-slot,
+.ii-lock,
+.ii-page-button,
+.ii-page-number {
+  box-sizing: border-box;
+  border: 1px solid #5a431f;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 121, .13), transparent 36%),
+    linear-gradient(180deg, rgba(36, 28, 18, .98), rgba(7, 7, 7, .98));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 0 0 1px rgba(0,0,0,.82);
+  color: #f4e3bd;
+  text-shadow: 0 1px 2px #000;
+}
+
+.ii-slot {
+  width: var(--ii-slot-size);
+  height: var(--ii-slot-size);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ii-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: .95;
+  pointer-events: none;
+}
+
+.ii-slot:hover {
+  border-color: #c79b4a;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    0 0 10px rgba(255, 195, 85, .42);
+}
+
+.ii-slot-locked:hover {
+  border-color: #7b5b2d;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    0 0 0 1px rgba(0,0,0,.82);
+}
+
+.ii-dragging {
+  opacity: .55;
+  filter: saturate(.7);
+}
+
+.ii-keybind {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: #e9e3d6;
+  text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+  pointer-events: none;
+}
+
+.ii-label {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  font-size: 9px;
+  color: #f3e0b0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.ii-lock {
+  width: var(--ii-slot-size);
+  height: var(--ii-slot-size);
+  flex: 0 0 var(--ii-slot-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.ii-lock:hover {
+  border-color: #d6aa55;
+  color: #fff2c6;
+  box-shadow: 0 0 10px rgba(255, 202, 94, .38), inset 0 0 0 1px rgba(0,0,0,.75);
+}
+
+.ii-lock-closed {
+  color: #c9b58d;
+  filter: brightness(.86);
+}
+
+.ii-pager {
+  width: var(--ii-slot-size);
+  height: var(--ii-slot-size);
+  flex: 0 0 var(--ii-slot-size);
+  display: grid;
+  grid-template-rows: 15px 18px 15px;
+  gap: 0;
+  align-items: stretch;
+}
+
+.ii-page-button,
+.ii-page-number {
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.ii-page-button {
+  cursor: pointer;
+  font-size: 14px;
+  color: #d9c59b;
+}
+.ii-page-up { border-radius: 6px 6px 0 0; border-bottom: 0; }
+.ii-page-down { border-radius: 0 0 6px 6px; border-top: 0; }
+.ii-page-number {
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff0c2;
+}
+.ii-page-button:hover {
+  color: #fff2bd;
+  background: linear-gradient(180deg, rgba(87, 58, 27, .96), rgba(17, 13, 8, .98));
+}
+.ii-page-flash {
+  animation: ii-page-flash .15s ease-out;
+}
+@keyframes ii-page-flash {
+  0% { color: #ffd25d; text-shadow: 0 0 12px #ffba32, 0 1px 2px #000; }
+  100% { color: #fff0c2; text-shadow: 0 1px 2px #000; }
+}
+
+#ii-action-bars {
+  position: fixed;
+  inset: 0;
+  transform: none;
+  z-index: 75;
+  display: block;
+  pointer-events: none;
+}
+
+#ii-action-bars .ii-bar {
+  position: fixed;
+  transform: none;
+}
+
+.ii-layout-mode {
+  cursor: move;
+  border-color: #d0a24a;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255, 231, 152, .22),
+    inset 0 -8px 18px rgba(0,0,0,.54),
+    0 0 16px rgba(255, 198, 74, .42) !important;
+}
+
+body.ii-setup-mode .ii-slot {
+  cursor: default;
+}
+
+#ii-setup-button {
+  position: fixed;
+  z-index: 80;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #5a431f;
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 121, .13), transparent 36%),
+    linear-gradient(180deg, rgba(42, 32, 20, .98), rgba(8, 8, 8, .98));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 0 0 1px rgba(0,0,0,.82);
+  color: #f4e3bd;
+  text-shadow: 0 1px 2px #000;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, color .15s ease, filter .15s ease;
+  pointer-events: auto;
+}
+
+#ii-setup-button:hover,
+#ii-setup-button.ii-setup-active {
+  border-color: #d6aa55;
+  color: #fff2c6;
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.75),
+    0 0 13px rgba(255, 202, 94, .62),
+    0 0 0 1px rgba(0,0,0,.82);
+}
+
+#ii-setup-button.ii-setup-active {
+  outline: 1px solid rgba(255, 202, 94, .55);
+  outline-offset: 2px;
+}
+
+#ii-settings-menu {
+  position: fixed;
+  z-index: 81;
+  min-width: 178px;
+  padding: 8px;
+  border: 2px solid var(--ii-panel-border);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(93, 65, 31, 0.9), rgba(20, 13, 8, 0.97) 36%, rgba(8, 7, 6, 0.98)),
+    var(--ii-panel-bg);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255, 231, 152, .22),
+    inset 0 -8px 18px rgba(0,0,0,.54),
+    0 0 14px rgba(255, 185, 82, 0.26);
+  color: #f4e3bd;
+  pointer-events: auto;
+}
+
+.ii-settings-row {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-shadow: 0 1px 2px #000;
+  user-select: none;
+}
+
+.ii-settings-row:hover {
+  background: rgba(255, 202, 94, .10);
+  color: #fff2c6;
+}
+
+
+.ii-settings-row-audio {
+  margin-bottom: 5px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(123, 91, 45, .65);
+}
+
+.ii-settings-audio {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #7b5b2d;
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgba(18, 13, 8, .98), rgba(3, 3, 3, .98));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.65), 0 0 0 1px rgba(0,0,0,.7);
+  position: relative;
+}
+
+.ii-settings-audio.ii-audio-on {
+  color: #ffd45f;
+  border-color: #d6aa55;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 242, 190, .42), transparent 34%),
+    linear-gradient(180deg, #8f641f, #2b1a07 65%, #090806);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), 0 0 9px rgba(255, 202, 94, .55);
+}
+
+.ii-settings-audio.ii-audio-off {
+  color: #1a1a1a;
+  border-color: #2a241c;
+  background: linear-gradient(180deg, #121212, #020202);
+  text-shadow: none;
+  filter: brightness(.82);
+}
+
+.ii-settings-audio.ii-audio-off::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 9px;
+  border-top: 2px solid #6e1d16;
+  transform: rotate(-35deg);
+  box-shadow: 0 0 3px rgba(0,0,0,.8);
+}
+
+.ii-settings-row-setup {
+  margin-bottom: 5px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(123, 91, 45, .65);
+}
+
+.ii-settings-check {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  flex: 0 0 16px;
+  border: 1px solid #7b5b2d;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(18, 13, 8, .98), rgba(3, 3, 3, .98));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.65),
+    0 0 0 1px rgba(0,0,0,.7);
+}
+
+.ii-settings-check.ii-checked {
+  border-color: #d6aa55;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 242, 190, .65), transparent 30%),
+    linear-gradient(180deg, #ffd45f, #a46c1c 55%, #5d350b);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.55),
+    0 0 8px rgba(255, 202, 94, .55);
+}
+
+/* Chat dice controls */
+#ii-chat-dice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 6px 0;
+  padding: 4px;
+  border: 2px solid var(--ii-panel-border);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(93, 65, 31, 0.82), rgba(20, 13, 8, 0.95) 36%, rgba(8, 7, 6, 0.97)),
+    var(--ii-panel-bg);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255, 231, 152, .18),
+    inset 0 -8px 18px rgba(0,0,0,.48),
+    0 0 10px rgba(255, 185, 82, 0.18);
+}
+
+.ii-chat-dice-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ii-chat-die,
+.ii-chat-control,
+.ii-chat-mod-value {
+  box-sizing: border-box;
+  min-width: 34px;
+  height: 30px;
+  border: 1px solid #5a431f;
+  border-radius: 5px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 121, .13), transparent 36%),
+    linear-gradient(180deg, rgba(36, 28, 18, .98), rgba(7, 7, 7, .98));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 0 0 1px rgba(0,0,0,.82);
+  color: #f4e3bd;
+  text-shadow: 0 1px 2px #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  font-weight: 800;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.ii-chat-die {
+  width: 38px;
+  padding: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.ii-chat-control {
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.ii-chat-roll {
+  min-width: 72px;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.ii-chat-undo {
+  min-width: 34px;
+  font-size: 18px;
+  padding: 0;
+}
+
+.ii-chat-disabled {
+  opacity: .45;
+  filter: grayscale(.55) brightness(.75);
+}
+
+.ii-chat-advantage,
+.ii-chat-disadvantage {
+  min-width: 36px;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 0 5px;
+}
+
+.ii-chat-mod-value {
+  min-width: 44px;
+  font-size: 18px;
+  color: #fff0c2;
+}
+
+.ii-chat-die:hover,
+.ii-chat-control:hover,
+.ii-chat-active {
+  border-color: #d6aa55;
+  color: #fff2c6;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.75),
+    0 0 10px rgba(255, 202, 94, .48),
+    0 0 0 1px rgba(0,0,0,.82);
+}
+
+.ii-chat-die::after {
+  content: attr(data-ii-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translateX(-50%);
+  min-width: 30px;
+  padding: 4px 7px;
+  border: 1px solid #d6aa55;
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(52, 36, 16, .98), rgba(7, 7, 7, .98));
+  color: #fff0c2;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 0 10px rgba(255, 202, 94, .38),
+    0 2px 6px rgba(0,0,0,.72);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.ii-chat-die:hover::after {
+  opacity: 1;
+}
+
+.ii-chat-active {
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 242, 190, .42), transparent 34%),
+    linear-gradient(180deg, #8f641f, #2b1a07 65%, #090806);
+}
+
+.ii-die-shape {
+  width: 20px;
+  height: 20px;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 18%, rgba(255, 246, 203, .95), rgba(255, 229, 145, .46) 22%, transparent 44%),
+    linear-gradient(145deg, #ffe9a5 0%, #d5aa55 48%, #8b5c21 100%);
+  border: 1px solid rgba(0,0,0,.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.42),
+    inset -3px -4px 6px rgba(75, 39, 4, .45),
+    0 1px 2px rgba(0,0,0,.82);
+}
+
+.ii-die-shape::before {
+  content: "";
+  position: absolute;
+  inset: 18% 20% auto auto;
+  width: 42%;
+  height: 28%;
+  border-radius: 45%;
+  background: rgba(255, 249, 218, .42);
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+.ii-chat-d4 .ii-die-shape {
+  width: 22px;
+  height: 22px;
+  clip-path: polygon(50% 1%, 96% 92%, 4% 92%);
+}
+
+.ii-chat-d6 .ii-die-shape {
+  width: 21px;
+  height: 21px;
+  border-radius: 3px;
+  transform: perspective(24px) rotateX(7deg) rotateY(-10deg);
+}
+
+.ii-chat-d8 .ii-die-shape {
+  width: 21px;
+  height: 21px;
+  clip-path: polygon(50% 0, 96% 50%, 50% 100%, 4% 50%);
+}
+
+.ii-chat-d12 .ii-die-shape {
+  width: 22px;
+  height: 22px;
+  border-radius: 34%;
+  clip-path: polygon(50% 1%, 78% 11%, 98% 37%, 91% 71%, 65% 96%, 35% 96%, 9% 71%, 2% 37%, 22% 11%);
+}
+
+.ii-chat-d20 .ii-die-shape {
+  width: 22px;
+  height: 22px;
+  clip-path: polygon(50% 0, 90% 15%, 100% 57%, 76% 93%, 24% 93%, 0 57%, 10% 15%);
+}
+
+.ii-chat-d100 .ii-die-shape {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  clip-path: polygon(50% 0%, 68% 6%, 86% 18%, 97% 38%, 97% 62%, 86% 82%, 68% 94%, 50% 100%, 32% 94%, 14% 82%, 3% 62%, 3% 38%, 14% 18%, 32% 6%);
+  background:
+    radial-gradient(circle at 36% 18%, rgba(255, 250, 217, .9), rgba(255, 232, 151, .44) 20%, transparent 45%),
+    radial-gradient(circle at 70% 72%, rgba(85, 48, 9, .50), transparent 52%),
+    linear-gradient(145deg, #ffe29b 0%, #c99842 46%, #7b4f1d 100%);
+}
+
+
+/* Imagine Chat Controller v0.5.7: safe extension of the native Foundry chat */
+#ii-chat-dice {
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+#ii-chat-dice button {
+  pointer-events: auto;
+}
+
+#ii-chat-dice .ii-chat-dice-row-dice {
+  justify-content: space-between;
+}
+
+#ii-chat-dice .ii-chat-dice-row-controls {
+  display: grid;
+  grid-template-columns: 34px minmax(44px, 1fr) 34px 40px 40px 34px minmax(72px, 1.45fr);
+}
+
+#ii-chat-dice .ii-chat-die,
+#ii-chat-dice .ii-chat-control,
+#ii-chat-dice .ii-chat-mod-value {
+  min-width: 0;
+}
+
+
+/* v0.6.7 SVG dice icons */
+.ii-chat-die {
+  overflow: visible;
+}
+
+.ii-die-icon {
+  width: 25px;
+  height: 25px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.82));
+  transition: transform .12s ease, filter .12s ease;
+}
+
+.ii-chat-die:hover .ii-die-icon,
+.ii-chat-die.ii-chat-active .ii-die-icon {
+  transform: translateY(-1px) scale(1.08);
+  filter:
+    drop-shadow(0 1px 1px rgba(0,0,0,.85))
+    drop-shadow(0 0 5px rgba(255, 204, 92, .52));
+}
+
+.ii-chat-d100 .ii-die-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.ii-chat-die .ii-die-shape {
+  display: none !important;
+}
+
+/* Hotkey and panel manager additions */
+.ii-keybind {
+  top: auto;
+  bottom: 2px;
+  left: 3px;
+  right: 3px;
+  text-align: center;
+  font-size: 12px;
+  color: #fff2c6;
+  opacity: .95;
+}
+
+.ii-settings-title {
+  padding: 4px 6px 7px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(123, 91, 45, .65);
+  color: #ffd45f;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  text-shadow: 0 1px 2px #000, 0 0 8px rgba(255, 202, 94, .35);
+}
+
+.ii-settings-panel-row {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ii-settings-eye,
+.ii-settings-gear,
+.ii-keybind-button,
+.ii-keybind-clear {
+  border: 1px solid #5a431f;
+  border-radius: 5px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 121, .13), transparent 36%),
+    linear-gradient(180deg, rgba(36, 28, 18, .98), rgba(7, 7, 7, .98));
+  color: #f4e3bd;
+  text-shadow: 0 1px 2px #000;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.76), 0 0 0 1px rgba(0,0,0,.82);
+  cursor: pointer;
+}
+
+.ii-settings-eye,
+.ii-settings-gear {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ii-settings-eye:hover,
+.ii-settings-gear:hover,
+.ii-keybind-button:hover,
+.ii-keybind-clear:hover {
+  border-color: #d6aa55;
+  color: #fff2c6;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.75), 0 0 9px rgba(255, 202, 94, .45);
+}
+
+.ii-settings-panel-label {
+  flex: 1 1 auto;
+}
+
+.ii-panel-settings-menu {
+  min-width: 270px !important;
+}
+
+.ii-settings-back {
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(123, 91, 45, .65);
+}
+
+.ii-keybind-row {
+  height: 32px;
+  gap: 7px;
+}
+
+.ii-keybind-row-label {
+  flex: 0 0 62px;
+}
+
+.ii-keybind-button {
+  flex: 1 1 auto;
+  min-width: 120px;
+  height: 24px;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.ii-keybind-button.ii-keybind-capturing {
+  border-color: #d6aa55;
+  color: #ffd45f;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.75), 0 0 10px rgba(255, 202, 94, .55);
+}
+
+.ii-keybind-clear {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.ii-settings-hint {
+  margin-top: 8px;
+  padding: 7px 6px 2px;
+  border-top: 1px solid rgba(123, 91, 45, .65);
+  color: #cdbb96;
+  font-size: 11px;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* v0.6.9 — vertical action bars */
+.ii-bar.ii-vertical-up,
+.ii-bar.ii-vertical-down {
+  width: 64px;
+  height: calc((var(--ii-slot-size) * 12) + (var(--ii-gap) * 12) + 14px);
+  flex-direction: column;
+}
+
+.ii-bar.ii-vertical-up {
+  flex-direction: column-reverse;
+}
+
+.ii-bar.ii-vertical-up .ii-slots,
+.ii-bar.ii-vertical-down .ii-slots {
+  grid-template-columns: var(--ii-slot-size);
+  grid-template-rows: repeat(10, var(--ii-slot-size));
+}
+
+.ii-bar.ii-vertical-up .ii-slots {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.ii-bar.ii-vertical-down .ii-slots {
+  display: flex;
+  flex-direction: column;
+}
+
+.ii-bar.ii-vertical-up .ii-pager,
+.ii-bar.ii-vertical-down .ii-pager {
+  width: var(--ii-slot-size);
+  height: var(--ii-slot-size);
+  flex: 0 0 var(--ii-slot-size);
+}
+
+.ii-layout-mode.ii-vertical-up,
+.ii-layout-mode.ii-vertical-down {
+  cursor: ns-resize;
+}

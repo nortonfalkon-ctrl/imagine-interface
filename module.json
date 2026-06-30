@@ -1,0 +1,33 @@
+{
+  "id": "imagine-interface",
+  "title": "Imagine Interface",
+  "description": "Панели действий в MMO-стиле для Foundry VTT V13.",
+  "version": "0.7.2",
+  "authors": [
+    {
+      "name": "Norton Moon + ChatGPT"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/imagine-interface.js"
+  ],
+  "styles": [
+    "styles/imagine-interface.css"
+  ],
+  "languages": [
+    {
+      "lang": "ru",
+      "name": "Русский",
+      "path": "lang/ru.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ]
+}

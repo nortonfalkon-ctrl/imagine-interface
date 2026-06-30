@@ -1,0 +1,31 @@
+{
+  "II.Settings.ShowLabels.Name": "Показывать названия",
+  "II.Settings.ShowLabels.Hint": "Показывать короткие названия заклинаний, способностей и предметов на кнопках панелей действий.",
+  "II.Notifications.DropItem": "Перетащите сюда заклинание, способность, предмет или макрос.",
+  "II.Notifications.ItemNotFound": "Не удалось найти этот элемент.",
+  "II.Notifications.Cleared": "Ячейка очищена.",
+  "II.Notifications.Migrated": "Imagine Interface: настройки перенесены из старой версии модуля.",
+  "II.Tooltip.Empty": "Пустая ячейка",
+  "II.Tooltip.PageUp": "Предыдущая страница",
+  "II.Tooltip.PageDown": "Следующая страница",
+  "II.Tooltip.Audio": "Звук",
+  "II.Tooltip.Lock": "Закрыть панель действий",
+  "II.Tooltip.Unlock": "Открыть панель действий",
+  "II.Tooltip.SetupMode": "Режим настройки панелей",
+  "II": {
+    "Notifications": {
+      "DropSupported": "Перетащи сюда предмет, способность или макрос."
+    },
+    "Settings": {
+      "SetupMode": "Режим настройки",
+      "Panel": "Панель {number}",
+      "Audio": "Звук"
+    },
+    "Chat": {
+      "Advantage": "ПРЕ",
+      "Disadvantage": "ПОМ",
+      "Roll": "Бросок",
+      "Undo": "Назад"
+    }
+  }
+}
