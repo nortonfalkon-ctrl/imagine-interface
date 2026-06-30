@@ -357,11 +357,17 @@ function clampPositionToViewport(pos, width = 64, height = 64) {
 
 function snapPositionToViewportAndBars(pos, width = 64, height = 64, currentElement = null) {
   const edgeThreshold = 18;
-  const panelThreshold = 28;
+  const panelThreshold = 40;
   const gap = 8;
   const currentBar = currentElement?.closest?.(".ii-bar") ?? currentElement;
   const otherBars = Array.from(document.querySelectorAll("#ii-action-bars .ii-bar"))
-    .filter(bar => bar !== currentBar && bar.offsetParent !== null);
+    .filter(bar => {
+      if (bar === currentBar) return false;
+      if (!bar.isConnected) return false;
+      if (!bar.getClientRects?.().length) return false;
+      const style = window.getComputedStyle(bar);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
 
   let next = clampPositionToViewport(pos, width, height);
 
@@ -444,50 +450,84 @@ function snapPositionToViewportAndBars(pos, width = 64, height = 64, currentElem
 }
 
 function resolvePanelCollisions(pos, width, height, otherBars, gap = 8) {
-  let next = clampPositionToViewport(pos, width, height);
   const rectFrom = p => ({
     left: p.left,
     top: p.top,
     right: p.left + width,
     bottom: p.top + height,
     width,
-    height
+    height,
+    centerX: p.left + width / 2,
+    centerY: p.top + height / 2
   });
   const rectsOverlap = (a, b) =>
     a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   const distanceSq = (a, b) => ((a.left - b.left) ** 2) + ((a.top - b.top) ** 2);
+  const clamp = p => clampPositionToViewport(p, width, height);
+  const makeOtherRects = () => otherBars.map(bar => {
+    const r = bar.getBoundingClientRect();
+    return {
+      left: r.left,
+      top: r.top,
+      right: r.right,
+      bottom: r.bottom,
+      width: r.width,
+      height: r.height,
+      centerX: r.left + r.width / 2,
+      centerY: r.top + r.height / 2
+    };
+  });
 
-  for (let pass = 0; pass < 8; pass++) {
-    let changed = false;
+  const otherRects = makeOtherRects();
+  const overlapsAny = p => {
+    const r = rectFrom(p);
+    return otherRects.some(o => rectsOverlap(r, o));
+  };
+
+  let next = clamp(pos);
+  if (!overlapsAny(next)) return next;
+
+  // Если панель отпущена поверх другой, ищем ближайшую свободную сторону.
+  // Сохраняем визуальный смысл движения: сначала пробуем поставить рядом с
+  // пересекаемой панелью, затем проверяем все остальные панели и границы экрана.
+  for (let pass = 0; pass < 12 && overlapsAny(next); pass++) {
     const current = rectFrom(next);
-    for (const bar of otherBars) {
-      const r = bar.getBoundingClientRect();
-      if (!rectsOverlap(current, r)) continue;
+    const blocker = otherRects.find(o => rectsOverlap(current, o));
+    if (!blocker) break;
 
-      const candidates = [
-        { left: r.left - width - gap, top: next.top },      // слева от другой панели
-        { left: r.right + gap, top: next.top },             // справа от другой панели
-        { left: next.left, top: r.top - height - gap },     // над другой панелью
-        { left: next.left, top: r.bottom + gap }            // под другой панелью
-      ].map(p => clampPositionToViewport(p, width, height));
+    const xAlignments = [
+      next.left,
+      blocker.left,
+      blocker.right - width,
+      blocker.centerX - width / 2
+    ];
+    const yAlignments = [
+      next.top,
+      blocker.top,
+      blocker.bottom - height,
+      blocker.centerY - height / 2
+    ];
 
-      let best = candidates[0];
-      let bestDistance = distanceSq(next, best);
-      for (const candidate of candidates.slice(1)) {
-        const d = distanceSq(next, candidate);
-        if (d < bestDistance) {
-          best = candidate;
-          bestDistance = d;
-        }
-      }
-
-      next = best;
-      changed = true;
-      break;
+    const candidates = [];
+    for (const x of xAlignments) {
+      candidates.push(clamp({ left: x, top: blocker.top - height - gap }));
+      candidates.push(clamp({ left: x, top: blocker.bottom + gap }));
     }
-    if (!changed) break;
+    for (const y of yAlignments) {
+      candidates.push(clamp({ left: blocker.left - width - gap, top: y }));
+      candidates.push(clamp({ left: blocker.right + gap, top: y }));
+    }
+
+    const free = candidates.filter(candidate => !overlapsAny(candidate));
+    if (!free.length) break;
+
+    next = free.reduce((best, candidate) =>
+      distanceSq(pos, candidate) < distanceSq(pos, best) ? candidate : best,
+      free[0]
+    );
   }
-  return next;
+
+  return clamp(next);
 }
 
 function calculateDefaultBarPositions() {
