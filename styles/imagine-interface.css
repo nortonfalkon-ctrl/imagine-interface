@@ -822,3 +822,302 @@ body.ii-setup-mode .ii-slot {
 .ii-layout-mode.ii-vertical-down {
   cursor: ns-resize;
 }
+
+
+/* Foundry interface icon theme -------------------------------------------------
+   This does not replace Foundry's logic or files. Foundry still uses its normal
+   Font Awesome classes; Imagine Interface only recolors and frames the visible
+   buttons so the core UI matches our bronze/gold action bar style. */
+body.ii-theme-foundry-icons .ui-control,
+body.ii-theme-foundry-icons button.control,
+body.ii-theme-foundry-icons #controls button.control,
+body.ii-theme-foundry-icons #sidebar-tabs .item,
+body.ii-theme-foundry-icons #players button,
+body.ii-theme-foundry-icons #navigation button,
+body.ii-theme-foundry-icons .scene-control,
+body.ii-theme-foundry-icons .control-tool {
+  border: 1px solid rgba(123, 91, 45, .85) !important;
+  border-radius: 6px !important;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 121, .12), transparent 36%),
+    linear-gradient(180deg, rgba(40, 30, 18, .94), rgba(8, 8, 8, .96)) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.72),
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 0 0 1px rgba(0,0,0,.75) !important;
+  color: #d9c59b !important;
+  text-shadow: 0 1px 2px #000 !important;
+  transition: border-color .12s ease, box-shadow .12s ease, color .12s ease, filter .12s ease;
+}
+
+body.ii-theme-foundry-icons .ui-control::before,
+body.ii-theme-foundry-icons button.control::before,
+body.ii-theme-foundry-icons #controls button.control::before,
+body.ii-theme-foundry-icons .scene-control::before,
+body.ii-theme-foundry-icons .control-tool::before,
+body.ii-theme-foundry-icons #sidebar-tabs .item i,
+body.ii-theme-foundry-icons #sidebar-tabs .item::before,
+body.ii-theme-foundry-icons #players i,
+body.ii-theme-foundry-icons #navigation i,
+body.ii-theme-foundry-icons .fa-solid,
+body.ii-theme-foundry-icons .fa-regular,
+body.ii-theme-foundry-icons .fas,
+body.ii-theme-foundry-icons .far {
+  color: #d9c59b !important;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 6px rgba(255, 190, 78, .18) !important;
+}
+
+body.ii-theme-foundry-icons .ui-control:hover,
+body.ii-theme-foundry-icons button.control:hover,
+body.ii-theme-foundry-icons #controls button.control:hover,
+body.ii-theme-foundry-icons #sidebar-tabs .item:hover,
+body.ii-theme-foundry-icons #players button:hover,
+body.ii-theme-foundry-icons #navigation button:hover,
+body.ii-theme-foundry-icons .scene-control:hover,
+body.ii-theme-foundry-icons .control-tool:hover,
+body.ii-theme-foundry-icons .ui-control.active,
+body.ii-theme-foundry-icons button.control.active,
+body.ii-theme-foundry-icons #controls button.control.active,
+body.ii-theme-foundry-icons #sidebar-tabs .item.active,
+body.ii-theme-foundry-icons .scene-control.active,
+body.ii-theme-foundry-icons .control-tool.active,
+body.ii-theme-foundry-icons [aria-pressed="true"] {
+  border-color: #d6aa55 !important;
+  color: #fff0c2 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.76),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 0 10px rgba(255, 198, 74, .36) !important;
+  filter: brightness(1.08);
+}
+
+body.ii-theme-foundry-icons .ui-control:hover::before,
+body.ii-theme-foundry-icons button.control:hover::before,
+body.ii-theme-foundry-icons #controls button.control:hover::before,
+body.ii-theme-foundry-icons #sidebar-tabs .item:hover i,
+body.ii-theme-foundry-icons #sidebar-tabs .item.active i,
+body.ii-theme-foundry-icons .active::before,
+body.ii-theme-foundry-icons [aria-pressed="true"]::before {
+  color: #fff0c2 !important;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 9px rgba(255, 202, 94, .48) !important;
+}
+
+body.ii-theme-foundry-icons .ui-control.disabled,
+body.ii-theme-foundry-icons button.control.disabled,
+body.ii-theme-foundry-icons #controls button.control.disabled,
+body.ii-theme-foundry-icons #sidebar-tabs .item.disabled,
+body.ii-theme-foundry-icons [disabled] {
+  opacity: .48 !important;
+  filter: grayscale(.25) brightness(.75);
+}
+
+
+/* v0.7.6 — Imagine UI behavior overrides
+   Foundry fades core UI containers when the cursor is away. That looks good in
+   the default monochrome theme, but makes the bronze/gold Imagine theme muddy.
+   Keep the interface fully visible and replace cold defaults with warm accents. */
+body.ii-theme-foundry-icons .faded-ui,
+body.ii-theme-foundry-icons .faded-ui:hover,
+body.ii-theme-foundry-icons #ui-left,
+body.ii-theme-foundry-icons #ui-right,
+body.ii-theme-foundry-icons #players,
+body.ii-theme-foundry-icons #scene-controls,
+body.ii-theme-foundry-icons #sidebar,
+body.ii-theme-foundry-icons #sidebar-tabs,
+body.ii-theme-foundry-icons #navigation {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+body.ii-theme-foundry-icons .faded-ui,
+body.ii-theme-foundry-icons .faded-ui * {
+  transition-property: border-color, box-shadow, color, background, filter, transform !important;
+}
+
+/* Replace Foundry's cold blue/orange focus accents with the Imagine amber focus. */
+body.ii-theme-foundry-icons button:focus,
+body.ii-theme-foundry-icons button:focus-visible,
+body.ii-theme-foundry-icons .ui-control:focus,
+body.ii-theme-foundry-icons .ui-control:focus-visible,
+body.ii-theme-foundry-icons input:focus,
+body.ii-theme-foundry-icons textarea:focus,
+body.ii-theme-foundry-icons select:focus {
+  outline: none !important;
+  border-color: #d6aa55 !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .85),
+    0 0 10px rgba(255, 198, 74, .34),
+    inset 0 0 0 1px rgba(0,0,0,.72) !important;
+}
+
+/* Active sidebar/tool buttons should feel selected, not merely hovered. */
+body.ii-theme-foundry-icons .ui-control.active,
+body.ii-theme-foundry-icons button.control.active,
+body.ii-theme-foundry-icons #controls button.control.active,
+body.ii-theme-foundry-icons #sidebar-tabs .item.active,
+body.ii-theme-foundry-icons .scene-control.active,
+body.ii-theme-foundry-icons .control-tool.active,
+body.ii-theme-foundry-icons [aria-pressed="true"] {
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 220, 128, .22), transparent 42%),
+    linear-gradient(180deg, rgba(78, 52, 25, .98), rgba(16, 12, 8, .98)) !important;
+  border-color: #f0c46a !important;
+  color: #fff4ca !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.78),
+    inset 0 1px 0 rgba(255,255,255,.13),
+    0 0 11px rgba(255, 198, 74, .46) !important;
+}
+
+body.ii-theme-foundry-icons .ui-control:hover,
+body.ii-theme-foundry-icons button.control:hover,
+body.ii-theme-foundry-icons #controls button.control:hover,
+body.ii-theme-foundry-icons #sidebar-tabs .item:hover,
+body.ii-theme-foundry-icons #players button:hover,
+body.ii-theme-foundry-icons #navigation button:hover,
+body.ii-theme-foundry-icons .scene-control:hover,
+body.ii-theme-foundry-icons .control-tool:hover {
+  transform: translateY(-1px);
+}
+
+
+/* v0.7.7 — Imagine scrollbars
+   Bring Foundry scrollbars into the same bronze/gold visual language. */
+body.ii-theme-foundry-icons {
+  scrollbar-width: thin;
+  scrollbar-color: #c99a45 rgba(12, 9, 7, .82);
+}
+
+body.ii-theme-foundry-icons * {
+  scrollbar-width: thin;
+  scrollbar-color: #c99a45 rgba(12, 9, 7, .82);
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-track {
+  background:
+    linear-gradient(180deg, rgba(22, 16, 11, .96), rgba(8, 7, 6, .96));
+  border: 1px solid rgba(146, 94, 34, .46);
+  border-radius: 9px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.72),
+    inset 0 0 10px rgba(0,0,0,.55);
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-thumb {
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 225, 142, .42), transparent 36%),
+    linear-gradient(180deg, #e2bd69 0%, #a8732b 45%, #5b3515 100%);
+  border: 2px solid rgba(10, 8, 6, .96);
+  border-radius: 9px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 218, 132, .28),
+    inset 0 -4px 8px rgba(0,0,0,.32),
+    0 0 7px rgba(255, 194, 77, .20);
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-thumb:hover {
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 238, 171, .56), transparent 40%),
+    linear-gradient(180deg, #f0cc7a 0%, #bd8736 45%, #6e431b 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 232, 154, .42),
+    inset 0 -4px 8px rgba(0,0,0,.28),
+    0 0 10px rgba(255, 203, 91, .34);
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-corner {
+  background: rgba(10, 8, 6, .96);
+}
+
+
+/* v0.8.2 — rounded native WebKit scrollbars
+   Chrome/Electron ignores border-radius while scrollbar-color/scrollbar-width are active.
+   Reset the standard scrollbar properties, then draw the actual bars through WebKit pseudo-elements. */
+body.ii-theme-foundry-icons,
+body.ii-theme-foundry-icons * {
+  scrollbar-width: auto !important;
+  scrollbar-color: auto !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar,
+body.ii-theme-foundry-icons .chat-scroll::-webkit-scrollbar,
+body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar,
+body.ii-theme-foundry-icons .directory-list::-webkit-scrollbar,
+body.ii-theme-foundry-icons .window-content::-webkit-scrollbar,
+body.ii-theme-foundry-icons .journal-entry-content::-webkit-scrollbar,
+body.ii-theme-foundry-icons .scrollable::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: transparent !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-button,
+body.ii-theme-foundry-icons .chat-scroll::-webkit-scrollbar-button,
+body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar-button {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons .chat-scroll::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons .directory-list::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons .window-content::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons .journal-entry-content::-webkit-scrollbar-track,
+body.ii-theme-foundry-icons .scrollable::-webkit-scrollbar-track {
+  border-radius: 999px !important;
+  background:
+    linear-gradient(180deg, rgba(18, 12, 7, .98), rgba(5, 4, 3, .98)) !important;
+  border: 2px solid rgba(82, 56, 27, .95) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .78),
+    inset 0 0 8px rgba(0, 0, 0, .65),
+    0 0 0 1px rgba(0, 0, 0, .72) !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons .chat-scroll::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons .directory-list::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons .window-content::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons .journal-entry-content::-webkit-scrollbar-thumb,
+body.ii-theme-foundry-icons .scrollable::-webkit-scrollbar-thumb {
+  min-height: 42px !important;
+  border-radius: 999px !important;
+  border: 3px solid rgba(8, 6, 4, .96) !important;
+  background:
+    radial-gradient(circle at 36% 18%, rgba(255, 238, 170, .72), transparent 30%),
+    linear-gradient(180deg, #f1ca74 0%, #c08a37 44%, #7a4b1e 76%, #3b210d 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 226, 145, .38),
+    inset 0 -6px 10px rgba(0, 0, 0, .35),
+    0 0 8px rgba(255, 196, 78, .28) !important;
+  background-clip: padding-box !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-thumb:hover,
+body.ii-theme-foundry-icons .chat-scroll::-webkit-scrollbar-thumb:hover,
+body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar-thumb:hover {
+  background:
+    radial-gradient(circle at 36% 18%, rgba(255, 246, 198, .88), transparent 34%),
+    linear-gradient(180deg, #ffd984 0%, #d69b42 45%, #8b5522 78%, #45270f 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 238, 165, .52),
+    inset 0 -6px 10px rgba(0, 0, 0, .30),
+    0 0 12px rgba(255, 205, 90, .42) !important;
+}
+
+body.ii-theme-foundry-icons ::-webkit-scrollbar-corner {
+  background: transparent !important;
+}

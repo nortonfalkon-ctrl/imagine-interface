@@ -53,7 +53,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", async () => {
-  document.body.classList.add("ii-v13", "ii-hide-core-hotbar");
+  document.body.classList.add("ii-v13", "ii-hide-core-hotbar", "ii-theme-foundry-icons");
   await migrateLegacySettings();
   migrateOldCoreData();
   renderAll();
