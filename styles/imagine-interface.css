@@ -1121,3 +1121,52 @@ body.ii-theme-foundry-icons [data-application-part="log"]::-webkit-scrollbar-thu
 body.ii-theme-foundry-icons ::-webkit-scrollbar-corner {
   background: transparent !important;
 }
+
+
+/* v0.8.9 — chat dice panel width and compact controls
+   The dice panel follows the native chat input width. The right vertical Foundry
+   chat buttons remain outside the panel instead of overlapping it. */
+#ii-chat-dice {
+  align-self: flex-start !important;
+  flex: 0 0 auto !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+#ii-chat-dice .ii-chat-dice-row-controls {
+  display: grid !important;
+  grid-template-columns: 30px minmax(30px, 1fr) 30px 34px 34px 30px minmax(58px, 1.25fr) !important;
+  gap: 4px !important;
+}
+
+#ii-chat-dice .ii-chat-die {
+  width: 34px !important;
+}
+
+#ii-chat-dice .ii-chat-die,
+#ii-chat-dice .ii-chat-control,
+#ii-chat-dice .ii-chat-mod-value {
+  min-width: 0 !important;
+  padding-left: 3px !important;
+  padding-right: 3px !important;
+}
+
+#ii-chat-dice .ii-chat-advantage,
+#ii-chat-dice .ii-chat-disadvantage {
+  min-width: 0 !important;
+  font-size: 10px !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+#ii-chat-dice .ii-chat-roll {
+  min-width: 0 !important;
+  font-size: 11px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+#ii-chat-dice .ii-chat-mod-value {
+  min-width: 0 !important;
+  font-size: 16px !important;
+}

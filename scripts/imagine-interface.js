@@ -1131,7 +1131,21 @@ function renderChatDiceControls() {
   // Просто ставим нашу панель сразу после стандартного поля ввода.
   if (textarea.nextElementSibling !== panel) textarea.insertAdjacentElement('afterend', panel);
   textarea.classList.add('ii-chat-controller-textarea');
+  syncChatDicePanelWidth(textarea, panel);
   syncChatDiceControls();
+}
+
+function syncChatDicePanelWidth(textarea, panel) {
+  if (!textarea || !panel) return;
+  const rect = textarea.getBoundingClientRect?.();
+  const width = Math.round(rect?.width ?? 0);
+  if (width > 0) {
+    panel.style.width = `${width}px`;
+    panel.style.maxWidth = `${width}px`;
+  }
+  panel.style.alignSelf = 'flex-start';
+  panel.style.marginLeft = '0px';
+  panel.style.marginRight = 'auto';
 }
 
 function makeChatDieButton(die) {
