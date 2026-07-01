@@ -74,6 +74,15 @@ Hooks.on("renderHotbar", () => {
 });
 Hooks.on("controlToken", () => renderAll());
 Hooks.on("updateActor", () => renderAll());
+Hooks.on("updateItem", (item) => {
+  if (shouldRefreshForUpdatedItem(item)) scheduleActionBarsRefresh();
+});
+Hooks.on("createItem", (item) => {
+  if (shouldRefreshForUpdatedItem(item)) scheduleActionBarsRefresh();
+});
+Hooks.on("deleteItem", (item) => {
+  if (shouldRefreshForUpdatedItem(item)) scheduleActionBarsRefresh();
+});
 Hooks.on("renderChatLog", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("renderSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("activateSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
@@ -83,6 +92,28 @@ function renderAll() {
   renderActionBars();
   renderSetupButton();
   hideOriginalAudioControls();
+}
+
+let actionBarsRefreshTimer = null;
+
+function scheduleActionBarsRefresh(delay = 75) {
+  if (actionBarsRefreshTimer) window.clearTimeout(actionBarsRefreshTimer);
+  actionBarsRefreshTimer = window.setTimeout(() => {
+    actionBarsRefreshTimer = null;
+    renderActionBars();
+  }, delay);
+}
+
+function shouldRefreshForUpdatedItem(item) {
+  try {
+    const actor = item?.actor ?? (item?.parent?.documentName === "Actor" ? item.parent : null);
+    if (!actor) return false;
+    const current = selectedActor();
+    if (!current) return true;
+    return actor.id === current.id || actor.uuid === current.uuid;
+  } catch (_) {
+    return true;
+  }
 }
 
 async function migrateLegacySettings() {
@@ -293,8 +324,9 @@ function renderActionBars(options = {}) {
       slot.classList.add("ii-slot");
       if (locked) slot.classList.add("ii-slot-locked");
       slot.dataset.key = key;
-      slot.title = saved?.name ?? game.i18n.localize("II.Tooltip.Empty");
+      slot.title = "";
       slot.draggable = false;
+      attachSlotTooltip(slot, key, b, s);
 
       const img = document.createElement("img");
       img.src = saved?.img || `modules/${MODULE_ID}/assets/empty-slot.webp`;
@@ -331,6 +363,7 @@ function renderActionBars(options = {}) {
   }
 
   document.body.appendChild(container);
+  updateSlotResourceStates(container);
 }
 
 function getBarOrientation(data, barIndex) {
@@ -937,6 +970,519 @@ async function resolveItemFromDropData(dropData) {
   return null;
 }
 
+
+function attachSlotTooltip(slot, key, barIndex, slotIndex) {
+  slot.addEventListener("mouseenter", event => showSlotTooltip(event, key, barIndex, slotIndex));
+  slot.addEventListener("mousemove", event => positionSlotTooltip(event));
+  slot.addEventListener("mouseleave", hideSlotTooltip);
+  slot.addEventListener("contextmenu", event => showPinnedSlotTooltip(event, key, barIndex, slotIndex));
+}
+
+function tooltipEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function stripHtml(value) {
+  const div = document.createElement("div");
+  div.innerHTML = String(value ?? "");
+  return (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+}
+
+function localizeItemType(item) {
+  const type = item?.type ?? "";
+  const map = {
+    spell: "Заклинание",
+    weapon: "Оружие",
+    equipment: "Снаряжение",
+    consumable: "Расходник",
+    tool: "Инструмент",
+    loot: "Добыча",
+    feat: "Способность",
+    backpack: "Контейнер",
+    class: "Класс",
+    subclass: "Подкласс"
+  };
+  return map[type] ?? (type ? String(type) : "Предмет");
+}
+
+function romanSpellLevel(level) {
+  const numerals = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+  return numerals[Number(level)] ?? String(level);
+}
+
+function hasOwnUses(item) {
+  const uses = item?.system?.uses;
+  if (!uses) return false;
+  const value = uses.value;
+  const max = uses.max;
+  const hasValue = value !== undefined && value !== null && value !== "";
+  const hasMax = max !== undefined && max !== null && max !== "" && Number(max) > 0;
+  return hasValue && hasMax;
+}
+
+function formatUses(item) {
+  if (!hasOwnUses(item)) return "";
+  const uses = item.system.uses;
+  return `${uses.value ?? 0} / ${uses.max}`;
+}
+
+function formatTooltipBadgeType(item) {
+  if (!item) return "";
+  return localizeItemType(item);
+}
+
+function formatLocalizedNumberUnit(value, unit, dictionary = {}) {
+  const rawUnit = String(unit ?? "").trim();
+  const number = value === undefined || value === null || value === "" ? "" : String(value);
+  if (!rawUnit) return number;
+  const localized = dictionary[rawUnit] ?? rawUnit;
+  return [number, localized].filter(Boolean).join(" ");
+}
+
+function localizeRangeUnit(unit) {
+  const map = {
+    self: "на себя",
+    touch: "касание",
+    ft: "футов",
+    mi: "миль",
+    m: "м",
+    km: "км",
+    spec: "особая",
+    any: "любая"
+  };
+  return map[String(unit ?? "")] ?? String(unit ?? "");
+}
+
+function localizeDurationUnit(unit, value) {
+  const n = Math.abs(Number(value));
+  const one = n === 1;
+  const map = {
+    inst: "мгновенно",
+    instant: "мгновенно",
+    perm: "постоянно",
+    permanent: "постоянно",
+    round: one ? "раунд" : "раундов",
+    rounds: one ? "раунд" : "раундов",
+    turn: one ? "ход" : "ходов",
+    turns: one ? "ход" : "ходов",
+    minute: one ? "минута" : "минут",
+    minutes: one ? "минута" : "минут",
+    hour: one ? "час" : "часов",
+    hours: one ? "час" : "часов",
+    day: one ? "день" : "дней",
+    days: one ? "день" : "дней",
+    month: one ? "месяц" : "месяцев",
+    months: one ? "месяц" : "месяцев",
+    year: one ? "год" : "лет",
+    years: one ? "год" : "лет",
+    spec: "особая"
+  };
+  return map[String(unit ?? "")] ?? String(unit ?? "");
+}
+
+function formatQuantity(item) {
+  const qty = item?.system?.quantity;
+  if (qty === undefined || qty === null || qty === "" || Number(qty) <= 1) return "";
+  return String(qty);
+}
+
+function formatSpellLevel(item) {
+  if (item?.type !== "spell") return "";
+  const level = Number(item?.system?.level ?? 0);
+  if (!level) return "Заговор";
+  return `${romanSpellLevel(level)} круг`;
+}
+
+function formatActivation(item) {
+  const activation = item?.system?.activation;
+  if (!activation?.type) return "";
+  const cost = activation.cost ?? 1;
+  const labels = {
+    action: "действие",
+    bonus: "бонусное действие",
+    reaction: "реакция",
+    minute: "минута",
+    hour: "час",
+    day: "день",
+    special: "особое"
+  };
+  const type = labels[activation.type] ?? activation.type;
+  return `${cost && Number(cost) !== 1 ? cost + " " : ""}${type}`;
+}
+
+function formatRange(item) {
+  const range = item?.system?.range;
+  if (!range) return "";
+  const value = range.value;
+  const units = range.units ?? "";
+  if (units === "self") return "на себя";
+  if (value === undefined || value === null || value === "") return localizeRangeUnit(units);
+  const localizedUnits = localizeRangeUnit(units);
+  if (localizedUnits && String(localizedUnits) !== String(value)) return `${value} ${localizedUnits}`;
+  return String(value);
+}
+
+function formatDuration(item) {
+  const duration = item?.system?.duration;
+  if (!duration) return "";
+  const value = duration.value;
+  const units = duration.units;
+  const localizedUnits = localizeDurationUnit(units, value);
+  if ((value === undefined || value === null || value === "") && !localizedUnits) return "";
+  if (["мгновенно", "постоянно", "особая"].includes(localizedUnits) && (value === undefined || value === null || value === "")) return localizedUnits;
+  return [value, localizedUnits].filter(v => v !== undefined && v !== null && v !== "").join(" ");
+}
+
+function foundryLinkUuid(kind, target) {
+  if (!kind || !target) return "";
+  if (kind === "Compendium") return `Compendium.${target}`;
+  if (kind === "UUID") return target;
+  return `${kind}.${target}`;
+}
+
+function enrichInlineFoundryLinks(html) {
+  return String(html ?? "").replace(/@(Actor|Item|JournalEntry|JournalEntryPage|Macro|RollTable|Scene|Compendium|UUID)\[([^\]]+)\]\{([^}]+)\}/g, (_match, kind, target, label) => {
+    const uuid = foundryLinkUuid(kind, target);
+    const safeLabel = tooltipEscape(label);
+    const safeUuid = tooltipEscape(uuid);
+    return `<a class="content-link ii-content-link" draggable="true" data-uuid="${safeUuid}"><i class="fa-solid fa-feather-pointed"></i>${safeLabel}</a>`;
+  });
+}
+
+function getItemDescriptionHtml(item, options = {}) {
+  const raw = item?.system?.description?.value ?? item?.system?.description?.chat ?? "";
+  if (!raw) return "";
+  const enriched = enrichInlineFoundryLinks(raw);
+
+  if (options.fullDescription) return enriched;
+
+  const text = stripHtml(enriched);
+  if (!text) return "";
+  const maxLength = Number(options.maxLength ?? 260);
+  const short = maxLength > 0 && text.length > maxLength ? `${text.slice(0, maxLength).trim()}…` : text;
+  return tooltipEscape(short);
+}
+
+function buildSlotTooltipHtml(saved, doc, keybindValue, options = {}) {
+  if (!saved) {
+    return `<div class="ii-slot-tooltip-title">${tooltipEscape(game.i18n.localize("II.Tooltip.Empty"))}</div><div class="ii-slot-tooltip-help">Перетащи сюда предмет, способность или макрос.</div>`;
+  }
+
+  const isItem = doc?.documentName === "Item";
+  const isMacro = doc?.documentName === "Macro" || saved.kind === "macro";
+  const title = doc?.name ?? saved.name ?? "";
+  const img = doc?.img ?? saved.img ?? `modules/${MODULE_ID}/assets/empty-slot.webp`;
+  const type = isItem ? localizeItemType(doc) : (isMacro ? "Макрос" : (saved.kind === "item" ? "Предмет" : "Элемент"));
+  const badges = [];
+  if (isItem) {
+    const itemTypeBadge = formatTooltipBadgeType(doc);
+    const level = formatSpellLevel(doc);
+    const uses = formatUses(doc);
+    const qty = formatQuantity(doc);
+    if (itemTypeBadge) badges.push(itemTypeBadge);
+    if (level) badges.push(level);
+    if (uses) badges.push(uses);
+    if (qty) badges.push(`Количество: ${qty}`);
+  }
+  if (keybindValue) badges.push(`Клавиша: ${keybindValue}`);
+
+  const facts = [];
+  if (isItem) {
+    const activation = formatActivation(doc);
+    const range = formatRange(doc);
+    const duration = formatDuration(doc);
+    if (activation) facts.push(["Активация", activation]);
+    if (range) facts.push(["Дальность", range]);
+    if (duration) facts.push(["Длительность", duration]);
+  }
+
+  const description = isItem ? getItemDescriptionHtml(doc, { fullDescription: Boolean(options.fullDescription), maxLength: 260 }) : "";
+  const factsHtml = facts.map(([label, value]) => `<div class="ii-slot-tooltip-fact"><span>${tooltipEscape(label)}</span><b>${tooltipEscape(value)}</b></div>`).join("");
+  const badgesHtml = badges.map(b => `<span>${tooltipEscape(b)}</span>`).join("");
+
+  return `
+    ${options.pinned ? `<button type="button" class="ii-slot-tooltip-close" aria-label="Закрыть">×</button>` : ""}
+    <div class="ii-slot-tooltip-head">
+      <img src="${tooltipEscape(img)}" alt="">
+      <div>
+        <div class="ii-slot-tooltip-title">${tooltipEscape(title)}</div>
+        <div class="ii-slot-tooltip-type">${tooltipEscape(type)}</div>
+      </div>
+    </div>
+    ${badgesHtml ? `<div class="ii-slot-tooltip-badges">${badgesHtml}</div>` : ""}
+    ${factsHtml ? `<div class="ii-slot-tooltip-facts">${factsHtml}</div>` : ""}
+    ${description ? `<div class="ii-slot-tooltip-description">${description}</div>` : ""}
+    <div class="ii-slot-tooltip-help">ЛКМ — использовать · Shift + перетаскивание — переместить</div>
+  `;
+}
+
+function getItemActor(item) {
+  return item?.actor ?? selectedActor();
+}
+
+function hasAvailableSpellSlot(actor, level) {
+  if (!actor || !level) return true;
+  const minLevel = Number(level);
+  const spells = actor.system?.spells ?? {};
+
+  for (let currentLevel = minLevel; currentLevel <= 9; currentLevel++) {
+    const pool = spells[`spell${currentLevel}`];
+    if (!pool) continue;
+    if (Number(pool.value ?? 0) > 0) return true;
+  }
+
+  const pact = spells.pact;
+  if (pact && Number(pact.level ?? 0) >= minLevel && Number(pact.value ?? 0) > 0) return true;
+
+  return false;
+}
+
+function itemHasEnoughResources(item) {
+  if (!item || item.documentName !== "Item") return true;
+
+  if (hasOwnUses(item)) {
+    const value = Number(item.system.uses.value ?? 0);
+    return value > 0;
+  }
+
+  const quantity = item.system?.quantity;
+  if (item.type === "consumable" && quantity !== undefined && quantity !== null && quantity !== "") {
+    return Number(quantity) > 0;
+  }
+
+  if (item.type === "spell") {
+    const level = Number(item.system?.level ?? 0);
+    if (!level) return true;
+    const actor = getItemActor(item);
+    return hasAvailableSpellSlot(actor, level);
+  }
+
+  return true;
+}
+
+async function updateSlotResourceStates(root = document) {
+  const slots = Array.from(root.querySelectorAll?.(".ii-slot[data-key]") ?? []);
+  if (!slots.length) return;
+  const data = getData();
+  for (const slot of slots) {
+    const saved = data.slots?.[slot.dataset.key];
+    if (!saved) {
+      slot.classList.remove("ii-slot-unavailable");
+      continue;
+    }
+    try {
+      const doc = await resolveSavedDoc(saved);
+      slot.classList.toggle("ii-slot-unavailable", Boolean(doc) && !itemHasEnoughResources(doc));
+    } catch (error) {
+      slot.classList.remove("ii-slot-unavailable");
+    }
+  }
+}
+
+function ensureSlotTooltip() {
+  let tooltip = document.getElementById("ii-slot-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "ii-slot-tooltip";
+    tooltip.setAttribute("role", "tooltip");
+    document.body.appendChild(tooltip);
+  }
+  return tooltip;
+}
+
+function closePinnedSlotTooltip() {
+  closeTextCopyMenu();
+  const tooltip = document.getElementById("ii-slot-tooltip");
+  pinnedSlotTooltip = false;
+  if (!tooltip) return;
+  tooltip.classList.remove("ii-visible", "ii-pinned");
+  tooltip.innerHTML = "";
+}
+
+function getSelectedTextInside(element) {
+  const selection = window.getSelection?.();
+  if (!selection || selection.rangeCount === 0) return "";
+  const text = String(selection.toString() ?? "").trim();
+  if (!text) return "";
+  const range = selection.getRangeAt(0);
+  const start = range.startContainer?.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer?.parentElement;
+  const end = range.endContainer?.nodeType === Node.ELEMENT_NODE ? range.endContainer : range.endContainer?.parentElement;
+  if (!start || !end) return "";
+  if (!element.contains(start) || !element.contains(end)) return "";
+  return text;
+}
+
+function closeTextCopyMenu() {
+  document.getElementById("ii-text-copy-menu")?.remove();
+}
+
+function showTextCopyMenu(event, text) {
+  closeTextCopyMenu();
+  const menu = document.createElement("div");
+  menu.id = "ii-text-copy-menu";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Скопировать текст";
+  button.addEventListener("click", async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    try {
+      await navigator.clipboard?.writeText?.(text);
+      ui.notifications?.info?.("Текст скопирован.");
+    } catch (_) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      ui.notifications?.info?.("Текст скопирован.");
+    }
+    closeTextCopyMenu();
+  });
+  menu.appendChild(button);
+  document.body.appendChild(menu);
+  const width = menu.offsetWidth || 160;
+  const height = menu.offsetHeight || 32;
+  const left = Math.min(window.innerWidth - width - 8, Math.max(8, event.clientX));
+  const top = Math.min(window.innerHeight - height - 8, Math.max(8, event.clientY));
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+}
+
+function bindPinnedTooltipClose(tooltip) {
+  tooltip.querySelector(".ii-slot-tooltip-close")?.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    closePinnedSlotTooltip();
+  });
+  tooltip.querySelectorAll(".ii-content-link[data-uuid]").forEach(link => {
+    if (link.dataset.iiLinkReady) return;
+    link.dataset.iiLinkReady = "true";
+    link.addEventListener("click", async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        const doc = await fromUuid(event.currentTarget.dataset.uuid);
+        doc?.sheet?.render?.(true);
+      } catch (error) {
+        console.warn(`${MODULE_ID} | Could not open tooltip content link`, error);
+      }
+    });
+  });
+  const description = tooltip.querySelector(".ii-slot-tooltip-description");
+  if (description && !description.dataset.iiTextContextReady) {
+    description.dataset.iiTextContextReady = "true";
+    description.addEventListener("contextmenu", event => {
+      const selectedText = getSelectedTextInside(description);
+      if (!selectedText) {
+        event.stopPropagation();
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      showTextCopyMenu(event, selectedText);
+    });
+    description.addEventListener("mousedown", event => event.stopPropagation());
+    description.addEventListener("pointerdown", event => event.stopPropagation());
+  }
+}
+
+async function showSlotTooltip(event, key, barIndex, slotIndex) {
+  if (pinnedSlotTooltip) return;
+  const tooltip = ensureSlotTooltip();
+  const data = getData();
+  const saved = data.slots?.[key];
+  const keybindValue = getSlotKeybind(data, barIndex, slotIndex);
+  tooltip.classList.remove("ii-pinned");
+  tooltip.innerHTML = buildSlotTooltipHtml(saved, null, keybindValue);
+  tooltip.classList.add("ii-visible");
+  positionSlotTooltip(event);
+
+  if (!saved) return;
+  try {
+    const doc = await resolveSavedDoc(saved);
+    if (pinnedSlotTooltip || !tooltip.classList.contains("ii-visible")) return;
+    const current = document.querySelector(`.ii-slot[data-key="${CSS.escape(key)}"]:hover`);
+    if (!current) return;
+    tooltip.innerHTML = buildSlotTooltipHtml(saved, doc, keybindValue);
+    positionSlotTooltip(event);
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Tooltip data could not be resolved`, error);
+  }
+}
+
+async function showPinnedSlotTooltip(event, key, barIndex, slotIndex) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const tooltip = ensureSlotTooltip();
+  const data = getData();
+  const saved = data.slots?.[key];
+  const keybindValue = getSlotKeybind(data, barIndex, slotIndex);
+
+  pinnedSlotTooltip = true;
+  tooltip.classList.add("ii-visible", "ii-pinned");
+  tooltip.innerHTML = buildSlotTooltipHtml(saved, null, keybindValue, { pinned: true, fullDescription: true });
+  bindPinnedTooltipClose(tooltip);
+  positionPinnedSlotTooltip(event);
+
+  if (!saved) return;
+  try {
+    const doc = await resolveSavedDoc(saved);
+    if (!pinnedSlotTooltip || !tooltip.classList.contains("ii-visible")) return;
+    tooltip.innerHTML = buildSlotTooltipHtml(saved, doc, keybindValue, { pinned: true, fullDescription: true });
+    bindPinnedTooltipClose(tooltip);
+    positionPinnedSlotTooltip(event);
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Pinned tooltip data could not be resolved`, error);
+  }
+}
+
+function positionPinnedSlotTooltip(event) {
+  const tooltip = document.getElementById("ii-slot-tooltip");
+  if (!tooltip || !tooltip.classList.contains("ii-visible")) return;
+  const offset = 12;
+  const width = tooltip.offsetWidth || 320;
+  const height = tooltip.offsetHeight || 220;
+  let left = event.clientX + offset;
+  let top = event.clientY + offset;
+  if (left + width > window.innerWidth - 8) left = event.clientX - width - offset;
+  if (top + height > window.innerHeight - 8) top = window.innerHeight - height - 8;
+  tooltip.style.left = `${Math.max(8, left)}px`;
+  tooltip.style.top = `${Math.max(8, top)}px`;
+}
+
+function positionSlotTooltip(event) {
+  if (pinnedSlotTooltip) return;
+  const tooltip = document.getElementById("ii-slot-tooltip");
+  if (!tooltip || !tooltip.classList.contains("ii-visible")) return;
+  const offset = 16;
+  const width = tooltip.offsetWidth || 280;
+  const height = tooltip.offsetHeight || 120;
+  let left = event.clientX + offset;
+  let top = event.clientY + offset;
+  if (left + width > window.innerWidth - 8) left = event.clientX - width - offset;
+  if (top + height > window.innerHeight - 8) top = event.clientY - height - offset;
+  tooltip.style.left = `${Math.max(8, left)}px`;
+  tooltip.style.top = `${Math.max(8, top)}px`;
+}
+
+function hideSlotTooltip() {
+  if (pinnedSlotTooltip) return;
+  const tooltip = document.getElementById("ii-slot-tooltip");
+  if (!tooltip) return;
+  tooltip.classList.remove("ii-visible");
+}
+
 async function onClickSlot(event, key) {
   event.preventDefault();
   if (setupMode) return;
@@ -1075,6 +1621,7 @@ window.addEventListener("resize", () => {
 });
 
 window.addEventListener("mousedown", event => {
+  if (!event.target.closest?.("#ii-text-copy-menu")) closeTextCopyMenu();
   if (!settingsMenuOpen) return;
   if (event.target.closest?.("#ii-settings-menu, #ii-setup-button")) return;
   settingsMenuOpen = false;
@@ -1083,12 +1630,17 @@ window.addEventListener("mousedown", event => {
   renderSetupButton();
 }, true);
 
+window.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeTextCopyMenu();
+}, true);
+
 
 const CHAT_DICE = [4, 6, 8, 12, 20, 100];
 let chatDiceState = { die: null, count: 0, mod: 0, mode: null };
 let chatDiceHistory = [];
 const CHAT_DICE_HISTORY_LIMIT = 20;
 let chatDiceObserverStarted = false;
+let pinnedSlotTooltip = false;
 
 function startChatDiceObserver() {
   if (chatDiceObserverStarted) return;
