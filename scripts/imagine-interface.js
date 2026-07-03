@@ -3,6 +3,7 @@ const LEGACY_MODULE_ID = "wow-extra-spellbars";
 const TOTAL_BARS = 10;
 const SLOTS_PER_BAR = 10;
 const PAGES_PER_BAR = 5;
+const COLOR_SCHEMES = ["gold", "silver", "bronze", "steel"];
 const DEFAULT_DATA = {
   slots: {},
   pages: {},
@@ -37,6 +38,25 @@ Hooks.once("init", () => {
     onChange: renderAll
   });
 
+  game.settings.register(MODULE_ID, "colorScheme", {
+    name: "II.Settings.ColorScheme.Name",
+    hint: "II.Settings.ColorScheme.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    default: "gold",
+    choices: {
+      gold: "II.Settings.ColorScheme.Gold",
+      silver: "II.Settings.ColorScheme.Silver",
+      bronze: "II.Settings.ColorScheme.Bronze",
+      steel: "II.Settings.ColorScheme.Steel"
+    },
+    onChange: value => {
+      applyColorScheme(value);
+      renderSetupButton();
+    }
+  });
+
   game.settings.register(MODULE_ID, "data", {
     scope: "client",
     config: false,
@@ -54,6 +74,7 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", async () => {
   document.body.classList.add("ii-v13", "ii-hide-core-hotbar", "ii-theme-foundry-icons");
+  applyColorScheme(getColorScheme());
   await migrateLegacySettings();
   migrateOldCoreData();
   renderAll();
@@ -87,6 +108,36 @@ Hooks.on("renderChatLog", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("renderSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("activateSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("collapseSidebar", () => window.setTimeout(renderChatDiceControls, 50));
+
+function getColorScheme() {
+  try {
+    const value = game.settings.get(MODULE_ID, "colorScheme");
+    return COLOR_SCHEMES.includes(value) ? value : "gold";
+  } catch (_) {
+    return "gold";
+  }
+}
+
+function applyColorScheme(scheme = "gold") {
+  if (!document?.body) return;
+  const safeScheme = COLOR_SCHEMES.includes(scheme) ? scheme : "gold";
+  for (const item of COLOR_SCHEMES) {
+    document.body.classList.remove(`ii-color-${item}`);
+  }
+  document.body.classList.add(`ii-color-${safeScheme}`);
+}
+
+async function setColorScheme(scheme) {
+  const safeScheme = COLOR_SCHEMES.includes(scheme) ? scheme : "gold";
+  applyColorScheme(safeScheme);
+  await game.settings.set(MODULE_ID, "colorScheme", safeScheme);
+  renderSetupButton();
+}
+
+function colorSchemeLabel(scheme) {
+  const key = `II.Settings.ColorScheme.${scheme.charAt(0).toUpperCase()}${scheme.slice(1)}`;
+  return game.i18n.localize(key);
+}
 
 function renderAll() {
   renderActionBars();
@@ -636,6 +687,30 @@ function renderSettingsMenu(buttonPos) {
   title.classList.add("ii-settings-title");
   title.textContent = "Панели действий";
   menu.appendChild(title);
+
+  const colorRow = document.createElement("div");
+  colorRow.classList.add("ii-settings-row", "ii-settings-row-color");
+  const colorLabel = document.createElement("span");
+  colorLabel.classList.add("ii-settings-color-label");
+  colorLabel.textContent = game.i18n.localize("II.Settings.ColorScheme.Name");
+  const colorSelect = document.createElement("select");
+  colorSelect.classList.add("ii-settings-color-select");
+  const currentScheme = getColorScheme();
+  for (const scheme of COLOR_SCHEMES) {
+    const option = document.createElement("option");
+    option.value = scheme;
+    option.textContent = colorSchemeLabel(scheme);
+    option.selected = scheme === currentScheme;
+    colorSelect.appendChild(option);
+  }
+  colorSelect.addEventListener("click", event => event.stopPropagation());
+  colorSelect.addEventListener("change", async event => {
+    event.preventDefault();
+    event.stopPropagation();
+    await setColorScheme(event.currentTarget.value);
+  });
+  colorRow.append(colorLabel, colorSelect);
+  menu.appendChild(colorRow);
 
   const audioRow = document.createElement("div");
   audioRow.classList.add("ii-settings-row", "ii-settings-row-audio");
@@ -1635,7 +1710,7 @@ window.addEventListener("keydown", event => {
 }, true);
 
 
-const CHAT_DICE = [4, 6, 8, 12, 20, 100];
+const CHAT_DICE = [4, 6, 8, 10, 12, 20, 100];
 let chatDiceState = { die: null, count: 0, mod: 0, mode: null };
 let chatDiceHistory = [];
 const CHAT_DICE_HISTORY_LIMIT = 20;
@@ -1705,9 +1780,22 @@ function makeChatDieButton(die) {
   btn.type = 'button';
   btn.classList.add('ii-chat-die', `ii-chat-d${die}`);
   btn.dataset.die = String(die);
-  btn.dataset.iiTooltip = `d${die}`;
   btn.setAttribute('aria-label', `d${die}`);
-  btn.innerHTML = `<img class="ii-die-icon" src="modules/${MODULE_ID}/assets/icons/dice/d${die}.svg" alt="" draggable="false">`;
+
+  const text = document.createElement('span');
+  text.classList.add('ii-die-text');
+
+  const letter = document.createElement('span');
+  letter.classList.add('ii-die-letter');
+  letter.textContent = 'd';
+
+  const number = document.createElement('span');
+  number.classList.add('ii-die-number', `ii-die-number-${die}`);
+  number.textContent = String(die);
+
+  text.append(letter, number);
+  btn.appendChild(text);
+
   btn.addEventListener('click', event => {
     event.preventDefault();
     event.stopPropagation();

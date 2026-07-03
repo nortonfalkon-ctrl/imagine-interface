@@ -27,5 +27,11 @@
       "Roll": "Roll",
       "Undo": "Undo"
     }
-  }
+  },
+  "II.Settings.ColorScheme.Name": "Color scheme",
+  "II.Settings.ColorScheme.Hint": "Choose the metallic color scheme for the Imagine Interface UI.",
+  "II.Settings.ColorScheme.Gold": "Gold",
+  "II.Settings.ColorScheme.Silver": "Silver",
+  "II.Settings.ColorScheme.Bronze": "Bronze",
+  "II.Settings.ColorScheme.Steel": "Steel"
 }

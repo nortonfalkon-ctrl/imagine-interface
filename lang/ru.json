@@ -27,5 +27,11 @@
       "Roll": "Бросок",
       "Undo": "Назад"
     }
-  }
+  },
+  "II.Settings.ColorScheme.Name": "Цветовая схема",
+  "II.Settings.ColorScheme.Hint": "Выберите металлическую цветовую гамму интерфейса Imagine Interface.",
+  "II.Settings.ColorScheme.Gold": "Золотой",
+  "II.Settings.ColorScheme.Silver": "Серебряный",
+  "II.Settings.ColorScheme.Bronze": "Бронзовый",
+  "II.Settings.ColorScheme.Steel": "Стальной"
 }
