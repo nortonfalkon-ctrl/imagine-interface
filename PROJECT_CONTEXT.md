@@ -21,14 +21,14 @@ Visual style
 The module uses a dark fantasy UI style:
 Black and near-black backgrounds.
 Metallic borders and highlights.
-Warm glow or cold metallic glow depending on selected theme.
+Warm glow or cold metallic glow depending on the selected theme.
 Beveled fantasy/MMORPG controls.
 No flat design.
 No glassmorphism.
 No neon colors.
 Every new UI element should visually match the existing Imagine Interface style.
 Current color schemes
-The module now supports selectable color schemes.
+The module supports selectable color schemes.
 Available schemes:
 Gold — original Imagine Interface style.
 Silver — cold silver/gray metal.
@@ -89,6 +89,7 @@ Important asset cleanup:
 Old dice SVG icons are no longer used.
 Old dice token/icon images are no longer used.
 The `assets` folder should only contain `empty-slot.webp` unless new assets are intentionally added.
+No old dice SVG/icon assets should remain in the repository.
 Theme
 The module restyles the default Foundry UI into a consistent dark metallic theme.
 The following should follow the active color scheme:
@@ -171,18 +172,22 @@ Do not name the inner folder `imagine-interface-v0.9.18`.
 Correct archive structure:
 ```text
 imagine-interface-v0.9.18.zip
-└── imagine-interface/
-    ├── assets/
-    ├── lang/
-    ├── scripts/
-    ├── styles/
-    ├── module.json
-    └── ...
+└─ imagine-interface/
+   ├─ assets/
+   ├─ lang/
+   ├─ scripts/
+   ├─ styles/
+   ├─ module.json
+   └─ ...
 ```
 Recent release history
 v0.9.15
 Current baseline from the earlier project context.
-Action bars, tooltips, dice tray, and Foundry UI restyling were already implemented.
+Already implemented:
+Action bars.
+Tooltips.
+Dice tray.
+Foundry UI restyling.
 v0.9.16
 Added configurable color schemes:
 Gold.
@@ -211,8 +216,10 @@ A distance marker appears above the hovered token.
 Distance uses real 3D calculation with elevation difference.
 Marker styling follows the selected color scheme.
 Updated release assets:
-`imagine-interface-v0.9.18.zip`
-`module.json`
+```text
+imagine-interface-v0.9.18.zip
+module.json
+```
 Development rules
 Read existing code first.
 Prefer minimal local fixes.
