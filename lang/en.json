@@ -33,5 +33,7 @@
   "II.Settings.ColorScheme.Gold": "Gold",
   "II.Settings.ColorScheme.Silver": "Silver",
   "II.Settings.ColorScheme.Bronze": "Bronze",
-  "II.Settings.ColorScheme.Steel": "Steel"
+  "II.Settings.ColorScheme.Steel": "Steel",
+  "II.Settings.ShowTokenDistance.Name": "Show token distance",
+  "II.Settings.ShowTokenDistance.Hint": "When a token is selected, show 3D distance to another token on hover. Token elevation is included."
 }

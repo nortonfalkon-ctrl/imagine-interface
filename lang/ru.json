@@ -33,5 +33,7 @@
   "II.Settings.ColorScheme.Gold": "Золотой",
   "II.Settings.ColorScheme.Silver": "Серебряный",
   "II.Settings.ColorScheme.Bronze": "Бронзовый",
-  "II.Settings.ColorScheme.Steel": "Стальной"
+  "II.Settings.ColorScheme.Steel": "Стальной",
+  "II.Settings.ShowTokenDistance.Name": "Показывать дистанцию до токена",
+  "II.Settings.ShowTokenDistance.Hint": "Когда выбран токен, показывать 3D-дистанцию до другого токена при наведении курсора. Учитывает высоту/глубину токенов."
 }

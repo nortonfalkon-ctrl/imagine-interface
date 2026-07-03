@@ -1659,3 +1659,32 @@ body.ii-theme-foundry-icons ::-webkit-scrollbar-corner {
   background: #111;
   color: var(--ii-text);
 }
+
+/* v0.9.18 — 3D token distance hover label */
+.ii-token-distance-label {
+  position: fixed;
+  z-index: 130;
+  transform: translate(-50%, -100%);
+  min-width: 44px;
+  box-sizing: border-box;
+  padding: 4px 9px 5px;
+  border: 1px solid var(--ii-accent-strong);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(var(--ii-warm-rgb), .18), transparent 38%),
+    linear-gradient(180deg, rgba(var(--ii-panel-top-rgb), .92), rgba(10, 8, 6, .96));
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(var(--ii-highlight-rgb), .18),
+    0 0 12px rgba(var(--ii-accent-rgb), .42),
+    0 2px 6px rgba(0,0,0,.72);
+  color: var(--ii-text-highlight);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px #000, 0 0 7px rgba(var(--ii-accent-rgb), .35);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}

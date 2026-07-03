@@ -57,6 +57,18 @@ Hooks.once("init", () => {
     }
   });
 
+  game.settings.register(MODULE_ID, "showTokenDistance", {
+    name: "II.Settings.ShowTokenDistance.Name",
+    hint: "II.Settings.ShowTokenDistance.Hint",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: true,
+    onChange: value => {
+      if (!value) hideTokenDistanceLabel();
+    }
+  });
+
   game.settings.register(MODULE_ID, "data", {
     scope: "client",
     config: false,
@@ -84,6 +96,7 @@ Hooks.once("ready", async () => {
   window.setTimeout(renderChatDiceControls, 500);
   window.setTimeout(renderChatDiceControls, 1500);
   startChatDiceObserver();
+  startTokenDistanceObserver();
 });
 
 Hooks.on("renderHotbar", () => {
@@ -93,7 +106,10 @@ Hooks.on("renderHotbar", () => {
     hideOriginalAudioControls();
   }, 50);
 });
-Hooks.on("controlToken", () => renderAll());
+Hooks.on("controlToken", () => {
+  renderAll();
+  hideTokenDistanceLabel();
+});
 Hooks.on("updateActor", () => renderAll());
 Hooks.on("updateItem", (item) => {
   if (shouldRefreshForUpdatedItem(item)) scheduleActionBarsRefresh();
@@ -108,6 +124,10 @@ Hooks.on("renderChatLog", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("renderSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("activateSidebarTab", () => window.setTimeout(renderChatDiceControls, 50));
 Hooks.on("collapseSidebar", () => window.setTimeout(renderChatDiceControls, 50));
+Hooks.on("hoverToken", (token, hovered) => handleTokenDistanceHover(token, hovered));
+Hooks.on("updateToken", () => scheduleTokenDistanceLabelUpdate());
+Hooks.on("deleteToken", () => hideTokenDistanceLabel());
+Hooks.on("canvasPan", () => scheduleTokenDistanceLabelUpdate());
 
 function getColorScheme() {
   try {
@@ -1957,6 +1977,190 @@ function resetChatDiceState() {
   syncChatDiceControls();
 }
 
+let tokenDistanceHoverTarget = null;
+let tokenDistanceUpdateFrame = null;
+let tokenDistanceObserverStarted = false;
+
+function startTokenDistanceObserver() {
+  if (tokenDistanceObserverStarted) return;
+  tokenDistanceObserverStarted = true;
+
+  window.addEventListener("mousemove", () => {
+    if (tokenDistanceHoverTarget) scheduleTokenDistanceLabelUpdate();
+  }, { passive: true });
+
+  window.addEventListener("resize", () => scheduleTokenDistanceLabelUpdate(), { passive: true });
+}
+
+function tokenDistanceEnabled() {
+  try {
+    return Boolean(game.settings.get(MODULE_ID, "showTokenDistance"));
+  } catch (_) {
+    return true;
+  }
+}
+
+function handleTokenDistanceHover(token, hovered) {
+  if (!tokenDistanceEnabled()) {
+    hideTokenDistanceLabel();
+    return;
+  }
+
+  if (!hovered) {
+    if (tokenDistanceHoverTarget === token) hideTokenDistanceLabel();
+    return;
+  }
+
+  const source = getSourceTokenForDistance(token);
+  if (!source || source === token) {
+    hideTokenDistanceLabel();
+    return;
+  }
+
+  tokenDistanceHoverTarget = token;
+  scheduleTokenDistanceLabelUpdate();
+}
+
+function getSourceTokenForDistance(targetToken = null) {
+  const controlled = canvas?.tokens?.controlled ?? [];
+  if (!controlled.length) return null;
+  return controlled.find(token => token && token !== targetToken) ?? null;
+}
+
+function scheduleTokenDistanceLabelUpdate() {
+  if (!tokenDistanceHoverTarget) return;
+  if (tokenDistanceUpdateFrame) return;
+  tokenDistanceUpdateFrame = window.requestAnimationFrame(() => {
+    tokenDistanceUpdateFrame = null;
+    updateTokenDistanceLabel();
+  });
+}
+
+function updateTokenDistanceLabel() {
+  const target = tokenDistanceHoverTarget;
+  const source = getSourceTokenForDistance(target);
+
+  if (!target || !source || source === target || !tokenDistanceEnabled()) {
+    hideTokenDistanceLabel();
+    return;
+  }
+
+  const distance = calculateTokenDistance3d(source, target);
+  if (!Number.isFinite(distance)) {
+    hideTokenDistanceLabel();
+    return;
+  }
+
+  const label = getOrCreateTokenDistanceLabel();
+  label.textContent = formatTokenDistance(distance);
+  positionTokenDistanceLabel(label, target);
+}
+
+function getOrCreateTokenDistanceLabel() {
+  let label = document.getElementById("ii-token-distance-label");
+  if (!label) {
+    label = document.createElement("div");
+    label.id = "ii-token-distance-label";
+    label.className = "ii-token-distance-label";
+    document.body.appendChild(label);
+  }
+  return label;
+}
+
+function hideTokenDistanceLabel() {
+  tokenDistanceHoverTarget = null;
+  if (tokenDistanceUpdateFrame) {
+    window.cancelAnimationFrame(tokenDistanceUpdateFrame);
+    tokenDistanceUpdateFrame = null;
+  }
+  document.getElementById("ii-token-distance-label")?.remove();
+}
+
+function calculateTokenDistance3d(source, target) {
+  const sourceCenter = getTokenCenter(source);
+  const targetCenter = getTokenCenter(target);
+  if (!sourceCenter || !targetCenter) return NaN;
+
+  const gridSize = getSceneGridSize();
+  const gridDistance = getSceneGridDistance();
+  if (!gridSize || !gridDistance) return NaN;
+
+  const horizontalPixels = Math.hypot(targetCenter.x - sourceCenter.x, targetCenter.y - sourceCenter.y);
+  const horizontalDistance = (horizontalPixels / gridSize) * gridDistance;
+  const verticalDistance = getTokenElevation(target) - getTokenElevation(source);
+
+  return Math.hypot(horizontalDistance, verticalDistance);
+}
+
+function getTokenCenter(token) {
+  if (!token) return null;
+  if (token.center && Number.isFinite(token.center.x) && Number.isFinite(token.center.y)) {
+    return { x: token.center.x, y: token.center.y };
+  }
+
+  const x = Number(token.document?.x ?? token.x ?? 0);
+  const y = Number(token.document?.y ?? token.y ?? 0);
+  const width = Number(token.w ?? token.width ?? getSceneGridSize());
+  const height = Number(token.h ?? token.height ?? getSceneGridSize());
+  return { x: x + width / 2, y: y + height / 2 };
+}
+
+function getTokenTopCenter(token) {
+  const center = getTokenCenter(token);
+  if (!center) return null;
+  const y = Number(token.document?.y ?? token.y ?? center.y);
+  return { x: center.x, y };
+}
+
+function getSceneGridSize() {
+  return Number(canvas?.scene?.grid?.size ?? canvas?.dimensions?.size ?? 100) || 100;
+}
+
+function getSceneGridDistance() {
+  return Number(canvas?.scene?.grid?.distance ?? canvas?.dimensions?.distance ?? 5) || 5;
+}
+
+function getSceneDistanceUnit() {
+  const unit = canvas?.scene?.grid?.units ?? canvas?.scene?.grid?.unit ?? canvas?.dimensions?.distanceUnits ?? "ft";
+  return String(unit || "ft").trim();
+}
+
+function getTokenElevation(token) {
+  const value = token?.document?.elevation ?? token?.elevation ?? 0;
+  return Number(value) || 0;
+}
+
+function formatTokenDistance(distance) {
+  const rounded = Math.round(distance * 10) / 10;
+  const text = Math.abs(rounded - Math.round(rounded)) < 0.05
+    ? String(Math.round(rounded))
+    : rounded.toFixed(1);
+  const unit = getSceneDistanceUnit();
+  return unit ? `${text} ${unit}` : text;
+}
+
+function positionTokenDistanceLabel(label, token) {
+  const point = getTokenTopCenter(token);
+  const screen = worldToScreenPoint(point);
+  if (!screen) {
+    label.style.display = "none";
+    return;
+  }
+
+  label.style.display = "block";
+  label.style.left = `${Math.round(screen.x)}px`;
+  label.style.top = `${Math.round(screen.y - 12)}px`;
+}
+
+function worldToScreenPoint(point) {
+  if (!point || !canvas?.stage?.worldTransform || !canvas?.app?.view) return null;
+  const transformed = canvas.stage.worldTransform.apply(point);
+  const rect = canvas.app.view.getBoundingClientRect();
+  return {
+    x: rect.left + transformed.x,
+    y: rect.top + transformed.y
+  };
+}
 
 function hideOriginalAudioControls() {
   document.getElementById("ii-audio-slot")?.remove();
