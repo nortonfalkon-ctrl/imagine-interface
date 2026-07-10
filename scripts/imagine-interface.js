@@ -128,6 +128,12 @@ Hooks.on("hoverToken", (token, hovered) => handleTokenDistanceHover(token, hover
 Hooks.on("updateToken", () => scheduleTokenDistanceLabelUpdate());
 Hooks.on("deleteToken", () => hideTokenDistanceLabel());
 Hooks.on("canvasPan", () => scheduleTokenDistanceLabelUpdate());
+Hooks.on("renderActorSheet", (app, html) => schedulePreparedSpellSheetStyling(app, html));
+Hooks.on("renderActorSheetV2", (app, element) => schedulePreparedSpellSheetStyling(app, element));
+Hooks.on("renderApplication", (app, element) => {
+  const actor = getActorFromSheetApp(app);
+  if (actor) schedulePreparedSpellSheetStyling(app, element);
+});
 
 function getColorScheme() {
   try {
@@ -157,6 +163,94 @@ async function setColorScheme(scheme) {
 function colorSchemeLabel(scheme) {
   const key = `II.Settings.ColorScheme.${scheme.charAt(0).toUpperCase()}${scheme.slice(1)}`;
   return game.i18n.localize(key);
+}
+
+
+function getActorFromSheetApp(app) {
+  const actor = app?.actor ?? app?.document ?? app?.object;
+  return actor?.documentName === "Actor" ? actor : null;
+}
+
+function getSheetHtmlElement(html, app = null) {
+  if (html instanceof HTMLElement) return html;
+  if (html?.[0] instanceof HTMLElement) return html[0];
+  if (html?.element instanceof HTMLElement) return html.element;
+  if (app?.element instanceof HTMLElement) return app.element;
+  if (app?.element?.[0] instanceof HTMLElement) return app.element[0];
+  return null;
+}
+
+function cssEscape(value) {
+  const text = String(value ?? "");
+  if (globalThis.CSS?.escape) return CSS.escape(text);
+  return text.replace(/[^a-zA-Z0-9_-]/g, "\$&");
+}
+
+function schedulePreparedSpellSheetStyling(app, html) {
+  window.setTimeout(() => applyPreparedSpellSheetStyling(app, html), 0);
+  window.setTimeout(() => applyPreparedSpellSheetStyling(app, html), 150);
+}
+
+function applyPreparedSpellSheetStyling(app, html) {
+  const actor = getActorFromSheetApp(app);
+  const root = getSheetHtmlElement(html, app);
+  if (!actor || !root?.querySelectorAll) return;
+
+  for (const item of actor.items ?? []) {
+    if (item?.type !== "spell") continue;
+    const row = findSheetItemRow(root, item.id ?? item._id);
+    if (!row) continue;
+
+    const unprepared = isPreparedSpellUnprepared(item);
+    row.classList.toggle("ii-spell-unprepared", unprepared);
+    row.classList.toggle("ii-spell-prepared", !unprepared);
+    markSpellPreparationControls(row);
+  }
+}
+
+function findSheetItemRow(root, itemId) {
+  if (!itemId) return null;
+  const escaped = cssEscape(itemId);
+  return root.querySelector(`[data-item-id="${escaped}"]`)
+    ?? root.querySelector(`[data-item-id='${escaped}']`)
+    ?? root.querySelector(`[data-item="${escaped}"]`)
+    ?? root.querySelector(`[data-item-id$="${escaped}"]`);
+}
+
+function isPreparedSpellUnprepared(item) {
+  const preparation = item?.system?.preparation ?? {};
+  const mode = String(preparation.mode ?? preparation.type ?? "").toLowerCase();
+  if (mode !== "prepared") return false;
+  return preparation.prepared !== true;
+}
+
+function markSpellPreparationControls(row) {
+  const controls = row.querySelectorAll("a, button, .item-control");
+  for (const control of controls) {
+    const haystack = [
+      control.className,
+      control.dataset?.action,
+      control.dataset?.property,
+      control.getAttribute?.("title"),
+      control.getAttribute?.("aria-label"),
+      control.textContent
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const icon = control.querySelector?.("i") ?? (control.matches?.("i") ? control : null);
+    const iconClasses = String(icon?.className ?? "").toLowerCase();
+    const looksLikePreparationToggle =
+      haystack.includes("prepar") ||
+      haystack.includes("подготов") ||
+      haystack.includes("system.preparation.prepared") ||
+      haystack.includes("itemtoggle") ||
+      haystack.includes("toggleprepared") ||
+      haystack.includes("item-toggle") ||
+      iconClasses.includes("fa-sun") ||
+      iconClasses.includes("fa-circle-check") ||
+      iconClasses.includes("fa-bookmark");
+
+    if (looksLikePreparationToggle) control.classList.add("ii-spell-prepare-toggle");
+  }
 }
 
 function renderAll() {

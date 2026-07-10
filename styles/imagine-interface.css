@@ -1688,3 +1688,35 @@ body.ii-theme-foundry-icons ::-webkit-scrollbar-corner {
   pointer-events: none;
   user-select: none;
 }
+
+/* v0.9.19 — dim unprepared spell preparation controls on dnd5e character sheets */
+body.ii-theme-foundry-icons .ii-spell-unprepared .ii-spell-prepare-toggle,
+body.ii-theme-foundry-icons .ii-spell-unprepared .ii-spell-prepare-toggle i,
+body.ii-theme-foundry-icons .ii-spell-unprepared .item-control.item-toggle,
+body.ii-theme-foundry-icons .ii-spell-unprepared .item-control.item-toggle i,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="prepare"],
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="prepare"] i,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"],
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"] i,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"],
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"] i {
+  color: var(--ii-hint-text) !important;
+  opacity: .38 !important;
+  filter: grayscale(.65) brightness(.72) saturate(.55) !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+
+body.ii-theme-foundry-icons .ii-spell-unprepared .ii-spell-prepare-toggle:hover,
+body.ii-theme-foundry-icons .ii-spell-unprepared .item-control.item-toggle:hover,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="prepare"]:hover,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"]:hover,
+body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"]:hover {
+  opacity: .72 !important;
+  filter: grayscale(.35) brightness(.92) saturate(.75) !important;
+}
+
+body.ii-theme-foundry-icons .ii-spell-prepared .ii-spell-prepare-toggle,
+body.ii-theme-foundry-icons .ii-spell-prepared .ii-spell-prepare-toggle i {
+  opacity: 1 !important;
+  filter: none !important;
+}
