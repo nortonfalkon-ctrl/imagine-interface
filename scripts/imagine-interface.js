@@ -4,6 +4,7 @@ const TOTAL_BARS = 10;
 const SLOTS_PER_BAR = 10;
 const PAGES_PER_BAR = 5;
 const COLOR_SCHEMES = ["gold", "silver", "bronze", "steel"];
+const USER_DATA_FLAG = "data";
 const DEFAULT_DATA = {
   slots: {},
   pages: {},
@@ -26,6 +27,7 @@ let activeDrag = null;
 
 let draggedSlotKey = null;
 let slotDropHandled = false;
+let dataStateCache = null;
 
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "showLabels", {
@@ -88,6 +90,7 @@ Hooks.once("ready", async () => {
   document.body.classList.add("ii-v13", "ii-hide-core-hotbar", "ii-theme-foundry-icons");
   applyColorScheme(getColorScheme());
   await migrateLegacySettings();
+  await migrateUserDataPersistence();
   migrateOldCoreData();
   renderAll();
   applyAudioStateFromData();
@@ -298,6 +301,52 @@ async function migrateLegacySettings() {
   }
 }
 
+
+async function migrateUserDataPersistence() {
+  try {
+    const userData = game.user?.getFlag?.(MODULE_ID, USER_DATA_FLAG);
+    const clientData = game.settings.get(MODULE_ID, "data");
+    const legacyData = game.settings.get(LEGACY_MODULE_ID, "data");
+
+    const candidates = [userData, clientData, legacyData]
+      .filter(candidate => candidate && typeof candidate === "object")
+      .map(candidate => normalizeData(candidate));
+
+    const best = candidates.reduce((selected, candidate) =>
+      dataContentScore(candidate) > dataContentScore(selected) ? candidate : selected,
+      null
+    );
+
+    const normalizedUserData = normalizeData(userData);
+    const shouldWriteUserFlag = best && dataContentScore(best) > dataContentScore(normalizedUserData);
+    dataStateCache = normalizeData(shouldWriteUserFlag ? best : (userData ?? clientData ?? DEFAULT_DATA));
+
+    if (shouldWriteUserFlag && game.user?.setFlag) {
+      await game.user.setFlag(MODULE_ID, USER_DATA_FLAG, dataStateCache);
+      console.log(`${MODULE_ID} | Migrated action bar data to user flags for persistent storage.`);
+    }
+  } catch (error) {
+    console.warn(`${MODULE_ID} | User data persistence migration skipped`, error);
+    try {
+      dataStateCache = normalizeData(game.settings.get(MODULE_ID, "data"));
+    } catch (_) {
+      dataStateCache = normalizeData(DEFAULT_DATA);
+    }
+  }
+}
+
+function dataContentScore(raw) {
+  if (!raw || typeof raw !== "object") return 0;
+  let score = 0;
+  for (const key of ["slots", "positions", "pages", "locks", "activeBars", "orientations", "keybinds"]) {
+    const value = raw[key];
+    if (value && typeof value === "object") score += Object.keys(value).length;
+  }
+  if (raw.setupButton) score += 1;
+  if (raw.audioPreviousVolumes) score += 1;
+  return score;
+}
+
 // В старых сборках нижняя панель была стандартным хотбаром Foundry.
 // В новой архитектуре все 4 панели — наши одинаковые компоненты.
 // Если пользователь уже добавил макросы в стандартный хотбар, пробуем скопировать
@@ -409,11 +458,38 @@ function getSlotKeyByBarAndSlot(barIndex, slotIndex) {
 }
 
 function getData() {
-  return normalizeData(game.settings.get(MODULE_ID, "data"));
+  if (dataStateCache) return normalizeData(dataStateCache);
+
+  try {
+    const userData = game.user?.getFlag?.(MODULE_ID, USER_DATA_FLAG);
+    if (userData) {
+      dataStateCache = normalizeData(userData);
+      return normalizeData(dataStateCache);
+    }
+  } catch (_) {}
+
+  try {
+    dataStateCache = normalizeData(game.settings.get(MODULE_ID, "data"));
+  } catch (_) {
+    dataStateCache = normalizeData(DEFAULT_DATA);
+  }
+  return normalizeData(dataStateCache);
 }
 
 async function setData(data) {
-  await game.settings.set(MODULE_ID, "data", normalizeData(data));
+  dataStateCache = normalizeData(data);
+
+  // Primary storage: user flags. Unlike client settings, user flags are stored in the
+  // world database and survive browser/cache changes, restarts, and different devices.
+  if (game.user?.setFlag) await game.user.setFlag(MODULE_ID, USER_DATA_FLAG, dataStateCache);
+
+  // Legacy backup for users upgrading from older versions. This is no longer the
+  // authoritative storage, but keeping it synchronized helps future migrations.
+  try {
+    await game.settings.set(MODULE_ID, "data", dataStateCache);
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Could not update legacy client data backup`, error);
+  }
 }
 
 function selectedActor() {
@@ -2171,6 +2247,14 @@ function hideTokenDistanceLabel() {
 }
 
 function calculateTokenDistance3d(source, target) {
+  const horizontalDistance = calculateTokenGridDistance(source, target);
+  if (!Number.isFinite(horizontalDistance)) return NaN;
+
+  const verticalDistance = getTokenElevation(target) - getTokenElevation(source);
+  return Math.hypot(horizontalDistance, verticalDistance);
+}
+
+function calculateTokenGridDistance(source, target) {
   const sourceCenter = getTokenCenter(source);
   const targetCenter = getTokenCenter(target);
   if (!sourceCenter || !targetCenter) return NaN;
@@ -2179,11 +2263,23 @@ function calculateTokenDistance3d(source, target) {
   const gridDistance = getSceneGridDistance();
   if (!gridSize || !gridDistance) return NaN;
 
-  const horizontalPixels = Math.hypot(targetCenter.x - sourceCenter.x, targetCenter.y - sourceCenter.y);
-  const horizontalDistance = (horizontalPixels / gridSize) * gridDistance;
-  const verticalDistance = getTokenElevation(target) - getTokenElevation(source);
+  const dx = Math.abs(targetCenter.x - sourceCenter.x) / gridSize;
+  const dy = Math.abs(targetCenter.y - sourceCenter.y) / gridSize;
 
-  return Math.hypot(horizontalDistance, verticalDistance);
+  // Square-grid tabletop distance: one diagonal square is still one square.
+  // This matches D&D-style grid movement where an adjacent diagonal target is 5 ft,
+  // not 7.1 ft. Elevation is applied afterward as true 3D distance.
+  if (isSquareGridDistanceMode()) return Math.max(dx, dy) * gridDistance;
+
+  return Math.hypot(dx, dy) * gridDistance;
+}
+
+function isSquareGridDistanceMode() {
+  const gridType = canvas?.scene?.grid?.type ?? canvas?.grid?.type ?? canvas?.dimensions?.gridType;
+  const squareTypes = new Set([1, "square", "squares", "gridless-square"]);
+  if (squareTypes.has(gridType)) return true;
+  if (typeof CONST !== "undefined" && gridType === CONST.GRID_TYPES?.SQUARE) return true;
+  return !gridType && Boolean(canvas?.grid?.grid);
 }
 
 function getTokenCenter(token) {
