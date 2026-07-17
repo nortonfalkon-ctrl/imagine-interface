@@ -1700,9 +1700,9 @@ body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"],
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"] i,
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"],
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"] i {
-  color: var(--ii-hint-text) !important;
-  opacity: .38 !important;
-  filter: grayscale(.65) brightness(.72) saturate(.55) !important;
+  color: var(--ii-text-muted) !important;
+  opacity: .58 !important;
+  filter: grayscale(.22) brightness(.88) saturate(.78) !important;
   text-shadow: 0 1px 2px #000 !important;
 }
 
@@ -1711,12 +1711,42 @@ body.ii-theme-foundry-icons .ii-spell-unprepared .item-control.item-toggle:hover
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="prepare"]:hover,
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-action="togglePrepared"]:hover,
 body.ii-theme-foundry-icons .ii-spell-unprepared [data-property="system.preparation.prepared"]:hover {
-  opacity: .72 !important;
-  filter: grayscale(.35) brightness(.92) saturate(.75) !important;
+  opacity: .82 !important;
+  filter: grayscale(.12) brightness(1) saturate(.9) !important;
 }
 
 body.ii-theme-foundry-icons .ii-spell-prepared .ii-spell-prepare-toggle,
 body.ii-theme-foundry-icons .ii-spell-prepared .ii-spell-prepare-toggle i {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+
+/* v0.9.22 — dim unequipped inventory item equip controls */
+body.ii-theme-foundry-icons .ii-item-unequipped .ii-item-equip-toggle,
+body.ii-theme-foundry-icons .ii-item-unequipped .ii-item-equip-toggle i,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="equip"],
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="equip"] i,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="toggleEquipped"],
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="toggleEquipped"] i,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-property="system.equipped"],
+body.ii-theme-foundry-icons .ii-item-unequipped [data-property="system.equipped"] i {
+  color: var(--ii-text-muted) !important;
+  opacity: .46 !important;
+  filter: grayscale(.28) brightness(.78) saturate(.72) !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+
+body.ii-theme-foundry-icons .ii-item-unequipped .ii-item-equip-toggle:hover,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="equip"]:hover,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-action="toggleEquipped"]:hover,
+body.ii-theme-foundry-icons .ii-item-unequipped [data-property="system.equipped"]:hover {
+  opacity: .78 !important;
+  filter: grayscale(.12) brightness(.94) saturate(.86) !important;
+}
+
+body.ii-theme-foundry-icons .ii-item-equipped .ii-item-equip-toggle,
+body.ii-theme-foundry-icons .ii-item-equipped .ii-item-equip-toggle i {
   opacity: 1 !important;
   filter: none !important;
 }

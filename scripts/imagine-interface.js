@@ -200,14 +200,23 @@ function applyPreparedSpellSheetStyling(app, html) {
   if (!actor || !root?.querySelectorAll) return;
 
   for (const item of actor.items ?? []) {
-    if (item?.type !== "spell") continue;
     const row = findSheetItemRow(root, item.id ?? item._id);
     if (!row) continue;
 
-    const unprepared = isPreparedSpellUnprepared(item);
-    row.classList.toggle("ii-spell-unprepared", unprepared);
-    row.classList.toggle("ii-spell-prepared", !unprepared);
-    markSpellPreparationControls(row);
+    if (item?.type === "spell") {
+      const unprepared = isPreparedSpellUnprepared(item);
+      row.classList.toggle("ii-spell-unprepared", unprepared);
+      row.classList.toggle("ii-spell-prepared", !unprepared);
+      markSpellPreparationControls(row);
+      continue;
+    }
+
+    if (isEquippableSheetItem(item)) {
+      const equipped = item?.system?.equipped === true;
+      row.classList.toggle("ii-item-unequipped", !equipped);
+      row.classList.toggle("ii-item-equipped", equipped);
+      markEquipmentControls(row);
+    }
   }
 }
 
@@ -225,6 +234,42 @@ function isPreparedSpellUnprepared(item) {
   const mode = String(preparation.mode ?? preparation.type ?? "").toLowerCase();
   if (mode !== "prepared") return false;
   return preparation.prepared !== true;
+}
+
+function isEquippableSheetItem(item) {
+  if (!item?.system || item?.type === "spell") return false;
+  return Object.prototype.hasOwnProperty.call(item.system, "equipped");
+}
+
+function markEquipmentControls(row) {
+  const controls = row.querySelectorAll("a, button, .item-control");
+  for (const control of controls) {
+    const haystack = [
+      control.className,
+      control.dataset?.action,
+      control.dataset?.property,
+      control.getAttribute?.("title"),
+      control.getAttribute?.("aria-label"),
+      control.textContent
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const icon = control.querySelector?.("i") ?? (control.matches?.("i") ? control : null);
+    const iconClasses = String(icon?.className ?? "").toLowerCase();
+    const looksLikeEquipmentToggle =
+      haystack.includes("equip") ||
+      haystack.includes("экип") ||
+      haystack.includes("надет") ||
+      haystack.includes("снят") ||
+      haystack.includes("system.equipped") ||
+      haystack.includes("toggleequipped") ||
+      iconClasses.includes("fa-shield") ||
+      iconClasses.includes("fa-shield-alt") ||
+      iconClasses.includes("fa-shield-halved") ||
+      iconClasses.includes("fa-tshirt") ||
+      iconClasses.includes("fa-hand-fist");
+
+    if (looksLikeEquipmentToggle) control.classList.add("ii-item-equip-toggle");
+  }
 }
 
 function markSpellPreparationControls(row) {
@@ -1905,6 +1950,7 @@ let chatDiceState = { die: null, count: 0, mod: 0, mode: null };
 let chatDiceHistory = [];
 const CHAT_DICE_HISTORY_LIMIT = 20;
 let chatDiceObserverStarted = false;
+let chatDiceInternalWrite = false;
 let pinnedSlotTooltip = false;
 
 function startChatDiceObserver() {
@@ -1948,6 +1994,7 @@ function renderChatDiceControls() {
   // Просто ставим нашу панель сразу после стандартного поля ввода.
   if (textarea.nextElementSibling !== panel) textarea.insertAdjacentElement('afterend', panel);
   textarea.classList.add('ii-chat-controller-textarea');
+  attachChatTextareaStateListeners(textarea);
   syncChatDicePanelWidth(textarea, panel);
   syncChatDiceControls();
 }
@@ -1991,6 +2038,11 @@ function makeChatDieButton(die) {
     event.stopPropagation();
     chooseChatDie(die);
   });
+  btn.addEventListener('contextmenu', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    removeChatDie(die);
+  });
   return btn;
 }
 
@@ -2015,6 +2067,30 @@ function makeChatValueBox() {
   return box;
 }
 
+function attachChatTextareaStateListeners(textarea) {
+  if (!textarea || textarea.dataset.iiChatDiceStateListeners === "1") return;
+  textarea.dataset.iiChatDiceStateListeners = "1";
+
+  textarea.addEventListener("input", () => {
+    if (chatDiceInternalWrite) return;
+    const value = String(textarea.value ?? "").trim();
+    if (!value) {
+      resetChatDiceState();
+      return;
+    }
+
+    const expected = buildChatFormula().trim();
+    if (chatDiceState.die && expected && value !== expected) resetChatDiceState();
+  });
+
+  textarea.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    window.setTimeout(() => {
+      if (!String(textarea.value ?? "").trim()) resetChatDiceState();
+    }, 100);
+  });
+}
+
 function getChatForm() {
   return document.querySelector('#chat-form, form#chat-form');
 }
@@ -2037,6 +2113,20 @@ function chooseChatDie(die) {
   else {
     chatDiceState.die = die;
     chatDiceState.count = 1;
+    chatDiceState.mode = null;
+  }
+  writeChatFormula();
+}
+
+function removeChatDie(die) {
+  if (Number(chatDiceState.die) !== Number(die)) return;
+  pushChatDiceHistory();
+  const currentCount = Math.max(0, Number(chatDiceState.count ?? 0));
+  if (currentCount > 1 && !chatDiceState.mode) {
+    chatDiceState.count = currentCount - 1;
+  } else {
+    chatDiceState.die = null;
+    chatDiceState.count = 0;
     chatDiceState.mode = null;
   }
   writeChatFormula();
@@ -2072,8 +2162,10 @@ function buildChatFormula() {
 function writeChatFormula() {
   const textarea = getChatTextarea();
   if (!textarea) return;
+  chatDiceInternalWrite = true;
   textarea.value = buildChatFormula();
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  chatDiceInternalWrite = false;
   textarea.focus();
   syncChatDiceControls();
 }
@@ -2139,6 +2231,7 @@ async function rollChatFormula() {
   // Запасной вариант: имитируем Enter в самом поле, но не трогаем контейнер чата.
   textarea.focus();
   textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+  window.setTimeout(() => resetChatDiceState(), 100);
 }
 
 function resetChatDiceState() {

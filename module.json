@@ -2,10 +2,10 @@
   "id": "imagine-interface",
   "title": "Imagine Interface",
   "description": "Настраиваемый интерфейс в стиле MMO для Foundry VTT V13.",
-  "version": "0.9.21",
+  "version": "0.9.22",
   "url": "https://github.com/nortonfalkon-ctrl/imagine-interface",
   "manifest": "https://github.com/nortonfalkon-ctrl/imagine-interface/releases/latest/download/module.json",
-  "download": "https://github.com/nortonfalkon-ctrl/imagine-interface/releases/download/v0.9.21/imagine-interface-v0.9.21.zip",
+  "download": "https://github.com/nortonfalkon-ctrl/imagine-interface/releases/download/v0.9.22/imagine-interface-v0.9.22.zip",
   "authors": [
     {
       "name": "Norton Moon + ChatGPT"
